@@ -470,7 +470,7 @@
 <script>
   const SUPABASE_URL = 'https://nhjnotsgolywogbvzisz.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oam5vdHNnb2x5d29nYnZ6aXN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTk1ODUsImV4cCI6MjA5MDQzNTU4NX0.xaoVp6C0POxLCIk3bnjYYHxuSzRBdh__gc_RkfoFjN8';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let allPosts = [];
   let currentFilter = 'all';
@@ -618,22 +618,22 @@
     thumb.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay"></iframe>`;
 
     // 조회수 증가
-    supabase.from('posts').update({ view_count: supabase.rpc('increment') })
+    sb.from('posts').update({ view_count: sb.rpc('increment') })
       .eq('id', postId).then(() => {});
   }
 
   // 투표
   async function vote(postId, type) {
     const voterId = getVoterId();
-    const { data: existing } = await supabase
+    const { data: existing } = await sb
       .from('votes').select('id').eq('post_id', postId).eq('voter_id', voterId);
 
     if (existing && existing.length > 0) return;
 
-    await supabase.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId });
+    await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId });
 
     // UI 업데이트
-    const { data: votes } = await supabase.from('votes').select('*').eq('post_id', postId);
+    const { data: votes } = await sb.from('votes').select('*').eq('post_id', postId);
     const aiVotes = votes.filter(v => v.vote_type === 'ai').length;
     const realVotes = votes.filter(v => v.vote_type === 'real').length;
     const total = aiVotes + realVotes;
@@ -654,7 +654,7 @@
 
   // 리액션
   async function react(postId, type, btn) {
-    await supabase.from('reactions').insert({ post_id: postId, type });
+    await sb.from('reactions').insert({ post_id: postId, type });
     const countEl = btn.querySelector('.reaction-count');
     countEl.textContent = parseInt(countEl.textContent) + 1;
     btn.classList.add('reacted');
@@ -668,7 +668,7 @@
     if (!content) return;
 
     const nickname = randomNick();
-    await supabase.from('comments').insert({ post_id: postId, content, nickname });
+    await sb.from('comments').insert({ post_id: postId, content, nickname });
 
     const commentsEl = document.getElementById(`comments-${postId}`);
     const newComment = document.createElement('div');
@@ -694,9 +694,9 @@
     feed.innerHTML = '';
     for (const post of posts) {
       const [{ data: votes }, { data: reactions }, { data: comments }] = await Promise.all([
-        supabase.from('votes').select('*').eq('post_id', post.id),
-        supabase.from('reactions').select('*').eq('post_id', post.id),
-        supabase.from('comments').select('*').eq('post_id', post.id).order('created_at', { ascending: false }).limit(3),
+        sb.from('votes').select('*').eq('post_id', post.id),
+        sb.from('reactions').select('*').eq('post_id', post.id),
+        sb.from('comments').select('*').eq('post_id', post.id).order('created_at', { ascending: false }).limit(3),
       ]);
 
       const div = document.createElement('div');
@@ -707,7 +707,7 @@
 
   // 초기 로드
   async function loadFeed() {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('posts')
       .select('*')
       .order('created_at', { ascending: false });
