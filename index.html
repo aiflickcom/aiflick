@@ -434,7 +434,13 @@
     }
 
     @media (max-width: 480px) {
-      .header-nav { display: none; }
+      .header-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        max-width: calc(100vw - 180px);
+      }
+      .header-nav::-webkit-scrollbar { display: none; }
       .feed-container { padding: 16px 12px; }
       .card-title { font-size: 15px; }
     }
@@ -505,7 +511,7 @@
   // YouTube embed URL
   function getYouTubeEmbed(url) {
     const id = getYouTubeId(url);
-    return id ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1` : '';
+    return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : '';
   }
 
   // 카테고리 라벨
@@ -560,25 +566,39 @@
         <div class="card-title">${post.title}</div>
 
         <div class="vote-section">
-          <div class="vote-label">이 영상, 어떻게 생각해?</div>
-          <div class="vote-buttons">
-            <button class="vote-btn ai-btn ${myVote?.vote_type === 'ai' ? 'voted' : ''}"
-              onclick="vote('${post.id}', 'ai')">
-              🤖 AI 같다
-            </button>
-            <button class="vote-btn real-btn ${myVote?.vote_type === 'real' ? 'voted' : ''}"
-              onclick="vote('${post.id}', 'real')">
-              👤 진짜 같다
-            </button>
-          </div>
+          ${post.category === 'guess' ? `
+            <div class="vote-label">이 영상, AI야 진짜야?</div>
+            <div class="vote-buttons">
+              <button class="vote-btn ai-btn ${myVote?.vote_type === 'ai' ? 'voted' : ''}"
+                onclick="vote('${post.id}', 'ai')">🤖 AI 같다</button>
+              <button class="vote-btn real-btn ${myVote?.vote_type === 'real' ? 'voted' : ''}"
+                onclick="vote('${post.id}', 'real')">👤 진짜 같다</button>
+            </div>
+          ` : post.category === 'lab' ? `
+            <div class="vote-label">어떤 AI 툴로 만들었을까?</div>
+            <div class="vote-buttons">
+              <button class="vote-btn ai-btn ${myVote?.vote_type === 'ai' ? 'voted' : ''}"
+                onclick="vote('${post.id}', 'ai')">🤔 맞출 수 있다!</button>
+              <button class="vote-btn real-btn ${myVote?.vote_type === 'real' ? 'voted' : ''}"
+                onclick="vote('${post.id}', 'real')">😵 모르겠다</button>
+            </div>
+          ` : `
+            <div class="vote-label">이 영상 어때?</div>
+            <div class="vote-buttons">
+              <button class="vote-btn ai-btn ${myVote?.vote_type === 'ai' ? 'voted' : ''}"
+                onclick="vote('${post.id}', 'ai')">🔥 대박이다</button>
+              <button class="vote-btn real-btn ${myVote?.vote_type === 'real' ? 'voted' : ''}"
+                onclick="vote('${post.id}', 'real')">😐 별로다</button>
+            </div>
+          `}
           <div class="vote-result ${myVote || total > 0 ? 'show' : ''}" id="result-${post.id}">
             <div class="vote-bar-wrap">
               <div class="vote-bar-ai" style="width:${aiPct}%"></div>
               <div class="vote-bar-real" style="width:${realPct}%"></div>
             </div>
             <div class="vote-counts">
-              <span class="vote-count-ai">🤖 ${aiPct}% (${aiVotes}명)</span>
-              <span class="vote-count-real">👤 ${realPct}% (${realVotes}명)</span>
+              <span class="vote-count-ai">${post.category === 'guess' ? '🤖' : post.category === 'lab' ? '👈' : '🔥'} ${aiPct}% (${aiVotes}명)</span>
+              <span class="vote-count-real">${post.category === 'guess' ? '👤' : post.category === 'lab' ? '👉' : '😐'} ${realPct}% (${realVotes}명)</span>
             </div>
           </div>
         </div>
