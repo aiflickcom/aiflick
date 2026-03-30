@@ -514,7 +514,7 @@
     }
 
     // admin 체크
-    const { data: profile } = await supabase
+    const { data: profile } = await sb
       .from('profiles').select('is_admin').eq('id', data.user.id).single();
 
     if (!profile?.is_admin) {
@@ -651,7 +651,7 @@
   async function checkSession() {
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
-      const { data: profile } = await supabase
+      const { data: profile } = await sb
         .from('profiles').select('is_admin').eq('id', session.user.id).single();
       if (profile?.is_admin) {
         currentUser = session.user;
