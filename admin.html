@@ -476,7 +476,7 @@
 <script>
   const SUPABASE_URL = 'https://nhjnotsgolywogbvzisz.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oam5vdHNnb2x5d29nYnZ6aXN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTk1ODUsImV4cCI6MjA5MDQzNTU4NX0.xaoVp6C0POxLCIk3bnjYYHxuSzRBdh__gc_RkfoFjN8';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let currentUser = null;
 
@@ -505,7 +505,7 @@
     const password = document.getElementById('login-password').value;
     const errEl = document.getElementById('login-error');
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
     if (error) {
       errEl.textContent = '로그인 실패: ' + error.message;
@@ -518,7 +518,7 @@
       .from('profiles').select('is_admin').eq('id', data.user.id).single();
 
     if (!profile?.is_admin) {
-      await supabase.auth.signOut();
+      await sb.auth.signOut();
       errEl.textContent = '관리자 권한이 없습니다.';
       errEl.style.display = 'block';
       return;
@@ -530,7 +530,7 @@
 
   // 로그아웃
   async function doLogout() {
-    await supabase.auth.signOut();
+    await sb.auth.signOut();
     document.getElementById('login-wrap').style.display = 'flex';
     document.getElementById('admin-wrap').style.display = 'none';
     currentUser = null;
@@ -548,10 +548,10 @@
   // 통계 로드
   async function loadStats() {
     const [posts, votes, reactions, comments] = await Promise.all([
-      supabase.from('posts').select('id', { count: 'exact' }),
-      supabase.from('votes').select('id', { count: 'exact' }),
-      supabase.from('reactions').select('id', { count: 'exact' }),
-      supabase.from('comments').select('id', { count: 'exact' }),
+      sb.from('posts').select('id', { count: 'exact' }),
+      sb.from('votes').select('id', { count: 'exact' }),
+      sb.from('reactions').select('id', { count: 'exact' }),
+      sb.from('comments').select('id', { count: 'exact' }),
     ]);
 
     document.getElementById('stat-posts').textContent = posts.count || 0;
@@ -562,7 +562,7 @@
 
   // 영상 목록 로드
   async function loadPosts() {
-    const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+    const { data } = await sb.from('posts').select('*').order('created_at', { ascending: false });
     const list = document.getElementById('posts-list');
 
     if (!data || !data.length) {
@@ -612,7 +612,7 @@
     const ytId = getYouTubeId(url);
     const thumbnailUrl = thumb || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
 
-    const { error } = await supabase.from('posts').insert({
+    const { error } = await sb.from('posts').insert({
       title,
       video_url: url,
       video_type: 'youtube',
@@ -642,14 +642,14 @@
   async function deletePost(id, btn) {
     if (!confirm('정말 삭제하시겠어요?')) return;
     btn.textContent = '삭제 중...';
-    await supabase.from('posts').delete().eq('id', id);
+    await sb.from('posts').delete().eq('id', id);
     loadPosts();
     loadStats();
   }
 
   // 세션 확인
   async function checkSession() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await sb.auth.getSession();
     if (session) {
       const { data: profile } = await supabase
         .from('profiles').select('is_admin').eq('id', session.user.id).single();
