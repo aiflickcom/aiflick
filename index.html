@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIFlick — AI 영상 놀이터</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #111111;
+      --card2: #1a1a1a;
+      --border: #222222;
+      --accent: #ff3c3c;
+      --accent2: #ff8c00;
+      --text: #f0f0f0;
+      --muted: #666666;
+      --radius: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #ff3c3c, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .admin-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .admin-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* FEED */
+    .feed-container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* VIDEO CARD */
+    .video-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .video-card:hover {
+      border-color: #333;
+      transform: translateY(-2px);
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      background: #000;
+    }
+
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: none;
+    }
+
+    .video-wrapper .thumbnail {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .play-overlay {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px; height: 60px;
+      background: rgba(255,60,60,0.9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      pointer-events: none;
+    }
+
+    .play-overlay svg {
+      width: 24px; height: 24px;
+      fill: white;
+      margin-left: 4px;
+    }
+
+    .thumbnail-wrap:hover .play-overlay {
+      transform: translate(-50%, -50%) scale(1.1);
+      background: var(--accent);
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .category-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .category-badge.hot { background: rgba(255,60,60,0.15); color: #ff3c3c; }
+    .category-badge.funny { background: rgba(255,200,0,0.15); color: #ffc800; }
+    .category-badge.guess { background: rgba(0,200,255,0.15); color: #00c8ff; }
+    .category-badge.lab { background: rgba(150,100,255,0.15); color: #9664ff; }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    /* VOTE BUTTONS */
+    .vote-section {
+      margin-bottom: 14px;
+    }
+
+    .vote-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .vote-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .vote-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--card2);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .vote-btn:hover {
+      transform: scale(1.02);
+    }
+
+    .vote-btn.ai-btn:hover, .vote-btn.ai-btn.voted {
+      background: rgba(0,200,255,0.15);
+      border-color: #00c8ff;
+      color: #00c8ff;
+    }
+
+    .vote-btn.real-btn:hover, .vote-btn.real-btn.voted {
+      background: rgba(0,220,100,0.15);
+      border-color: #00dc64;
+      color: #00dc64;
+    }
+
+    /* VOTE RESULT BAR */
+    .vote-result {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .vote-result.show { display: block; }
+
+    .vote-bar-wrap {
+      display: flex;
+      border-radius: 6px;
+      overflow: hidden;
+      height: 8px;
+      background: var(--border);
+      margin-bottom: 6px;
+    }
+
+    .vote-bar-ai {
+      background: #00c8ff;
+      transition: width 0.4s ease;
+    }
+
+    .vote-bar-real {
+      background: #00dc64;
+      transition: width 0.4s ease;
+    }
+
+    .vote-counts {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .vote-count-ai { color: #00c8ff; }
+    .vote-count-real { color: #00dc64; }
+
+    /* REACTION BAR */
+    .reaction-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .reaction-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--muted);
+      transition: all 0.2s;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .reaction-btn:hover, .reaction-btn.reacted {
+      background: var(--card2);
+      border-color: var(--accent2);
+      color: var(--text);
+      transform: scale(1.05);
+    }
+
+    .reaction-count {
+      font-size: 12px;
+    }
+
+    /* COMMENT PREVIEW */
+    .comment-section {
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .comment-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .comment-item {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .comment-item .nickname {
+      color: var(--text);
+      font-weight: 600;
+      margin-right: 6px;
+    }
+
+    .comment-input-wrap {
+      display: flex;
+      gap: 8px;
+    }
+
+    .comment-input {
+      flex: 1;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .comment-input:focus {
+      border-color: var(--accent);
+    }
+
+    .comment-input::placeholder { color: var(--muted); }
+
+    .comment-submit {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 700;
+      transition: opacity 0.2s;
+    }
+
+    .comment-submit:hover { opacity: 0.85; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    /* LOADING */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+
+    @media (max-width: 480px) {
+      .header-nav { display: none; }
+      .feed-container { padding: 16px 12px; }
+      .card-title { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AIFlick</div>
+  <nav class="header-nav">
+    <button class="nav-btn active" onclick="filterFeed('all')">전체</button>
+    <button class="nav-btn" onclick="filterFeed('hot')">🔥 핫</button>
+    <button class="nav-btn" onclick="filterFeed('funny')">😂 웃긴</button>
+    <button class="nav-btn" onclick="filterFeed('guess')">❓ 맞춰봐</button>
+    <button class="nav-btn" onclick="filterFeed('lab')">🧪 실험실</button>
+  </nav>
+  <div class="header-right">
+    <a href="admin.html" class="admin-btn">관리자</a>
+  </div>
+</header>
+
+<main class="feed-container" id="feed">
+  <div class="loading">
+    <div class="spinner"></div>
+    <p>영상 불러오는 중...</p>
+  </div>
+</main>
+
+<footer>
+  AIFlick — AI 영상 전문 놀이터 🎬
+</footer>
+
+<script>
+  const SUPABASE_URL = 'https://nhjnotsgolywogbvzisz.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oam5vdHNnb2x5d29nYnZ6aXN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTk1ODUsImV4cCI6MjA5MDQzNTU4NX0.xaoVp6C0POxLCIk3bnjYYHxuSzRBdh__gc_RkfoFjN8';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let allPosts = [];
+  let currentFilter = 'all';
+
+  // 랜덤 닉네임 생성
+  function randomNick() {
+    return 'user_' + Math.floor(Math.random() * 9999);
+  }
+
+  // localStorage voter ID
+  function getVoterId() {
+    let id = localStorage.getItem('aiflick_voter_id');
+    if (!id) {
+      id = 'v_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      localStorage.setItem('aiflick_voter_id', id);
+    }
+    return id;
+  }
+
+  // YouTube ID 추출
+  function getYouTubeId(url) {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&\n?#]+)/);
+    return match ? match[1] : null;
+  }
+
+  // YouTube 썸네일
+  function getYouTubeThumbnail(url) {
+    const id = getYouTubeId(url);
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+  }
+
+  // YouTube embed URL
+  function getYouTubeEmbed(url) {
+    const id = getYouTubeId(url);
+    return id ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1` : '';
+  }
+
+  // 카테고리 라벨
+  function categoryLabel(cat) {
+    const map = { hot: '🔥 핫', funny: '😂 웃긴', guess: '❓ 맞춰봐', lab: '🧪 실험실' };
+    return map[cat] || cat;
+  }
+
+  // 피드 필터
+  function filterFeed(cat) {
+    currentFilter = cat;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    const filtered = cat === 'all' ? allPosts : allPosts.filter(p => p.category === cat);
+    renderFeed(filtered);
+  }
+
+  // 카드 렌더링
+  function renderCard(post, votes, reactions, comments) {
+    const aiVotes = votes.filter(v => v.vote_type === 'ai').length;
+    const realVotes = votes.filter(v => v.vote_type === 'real').length;
+    const total = aiVotes + realVotes;
+    const aiPct = total ? Math.round(aiVotes / total * 100) : 50;
+    const realPct = total ? 100 - aiPct : 50;
+
+    const voterId = getVoterId();
+    const myVote = votes.find(v => v.voter_id === voterId);
+
+    const reactionTypes = [
+      { type: 'hot', emoji: '🔥' },
+      { type: 'funny', emoji: '😂' },
+      { type: 'wow', emoji: '🤯' },
+      { type: 'like', emoji: '👍' },
+    ];
+
+    const thumbUrl = post.thumbnail_url || getYouTubeThumbnail(post.video_url);
+
+    return `
+    <div class="video-card" id="card-${post.id}">
+      <div class="video-wrapper">
+        <div class="thumbnail-wrap" id="thumb-${post.id}" onclick="playVideo('${post.id}', '${post.video_url}')">
+          <img class="thumbnail" src="${thumbUrl}" alt="${post.title}" onerror="this.style.background='#1a1a1a'">
+          <div class="play-overlay">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="category-badge ${post.category}">${categoryLabel(post.category)}</span>
+        </div>
+        <div class="card-title">${post.title}</div>
+
+        <div class="vote-section">
+          <div class="vote-label">이 영상, 어떻게 생각해?</div>
+          <div class="vote-buttons">
+            <button class="vote-btn ai-btn ${myVote?.vote_type === 'ai' ? 'voted' : ''}"
+              onclick="vote('${post.id}', 'ai')">
+              🤖 AI 같다
+            </button>
+            <button class="vote-btn real-btn ${myVote?.vote_type === 'real' ? 'voted' : ''}"
+              onclick="vote('${post.id}', 'real')">
+              👤 진짜 같다
+            </button>
+          </div>
+          <div class="vote-result ${myVote || total > 0 ? 'show' : ''}" id="result-${post.id}">
+            <div class="vote-bar-wrap">
+              <div class="vote-bar-ai" style="width:${aiPct}%"></div>
+              <div class="vote-bar-real" style="width:${realPct}%"></div>
+            </div>
+            <div class="vote-counts">
+              <span class="vote-count-ai">🤖 ${aiPct}% (${aiVotes}명)</span>
+              <span class="vote-count-real">👤 ${realPct}% (${realVotes}명)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="reaction-bar">
+          ${reactionTypes.map(r => {
+            const count = reactions.filter(rx => rx.type === r.type).length;
+            return `<button class="reaction-btn" onclick="react('${post.id}', '${r.type}', this)">
+              ${r.emoji} <span class="reaction-count">${count}</span>
+            </button>`;
+          }).join('')}
+        </div>
+
+        <div class="comment-section">
+          <div class="comment-preview" id="comments-${post.id}">
+            ${comments.slice(0, 3).map(c => `
+              <div class="comment-item">
+                <span class="nickname">${c.nickname}</span>${c.content}
+              </div>
+            `).join('') || '<div class="comment-item" style="color:#444">첫 댓글을 남겨보세요!</div>'}
+          </div>
+          <div class="comment-input-wrap">
+            <input class="comment-input" type="text" placeholder="댓글 남기기..."
+              id="comment-input-${post.id}" maxlength="200"
+              onkeydown="if(event.key==='Enter') submitComment('${post.id}')">
+            <button class="comment-submit" onclick="submitComment('${post.id}')">등록</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // 영상 재생
+  function playVideo(postId, url) {
+    const thumb = document.getElementById(`thumb-${postId}`);
+    const embedUrl = getYouTubeEmbed(url);
+    thumb.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay"></iframe>`;
+
+    // 조회수 증가
+    supabase.from('posts').update({ view_count: supabase.rpc('increment') })
+      .eq('id', postId).then(() => {});
+  }
+
+  // 투표
+  async function vote(postId, type) {
+    const voterId = getVoterId();
+    const { data: existing } = await supabase
+      .from('votes').select('id').eq('post_id', postId).eq('voter_id', voterId);
+
+    if (existing && existing.length > 0) return;
+
+    await supabase.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId });
+
+    // UI 업데이트
+    const { data: votes } = await supabase.from('votes').select('*').eq('post_id', postId);
+    const aiVotes = votes.filter(v => v.vote_type === 'ai').length;
+    const realVotes = votes.filter(v => v.vote_type === 'real').length;
+    const total = aiVotes + realVotes;
+    const aiPct = Math.round(aiVotes / total * 100);
+    const realPct = 100 - aiPct;
+
+    const result = document.getElementById(`result-${postId}`);
+    result.classList.add('show');
+    result.querySelector('.vote-bar-ai').style.width = aiPct + '%';
+    result.querySelector('.vote-bar-real').style.width = realPct + '%';
+    result.querySelector('.vote-count-ai').textContent = `🤖 ${aiPct}% (${aiVotes}명)`;
+    result.querySelector('.vote-count-real').textContent = `👤 ${realPct}% (${realVotes}명)`;
+
+    const card = document.getElementById(`card-${postId}`);
+    card.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('voted'));
+    card.querySelector(`.${type === 'ai' ? 'ai' : 'real'}-btn`).classList.add('voted');
+  }
+
+  // 리액션
+  async function react(postId, type, btn) {
+    await supabase.from('reactions').insert({ post_id: postId, type });
+    const countEl = btn.querySelector('.reaction-count');
+    countEl.textContent = parseInt(countEl.textContent) + 1;
+    btn.classList.add('reacted');
+    setTimeout(() => btn.classList.remove('reacted'), 500);
+  }
+
+  // 댓글 제출
+  async function submitComment(postId) {
+    const input = document.getElementById(`comment-input-${postId}`);
+    const content = input.value.trim();
+    if (!content) return;
+
+    const nickname = randomNick();
+    await supabase.from('comments').insert({ post_id: postId, content, nickname });
+
+    const commentsEl = document.getElementById(`comments-${postId}`);
+    const newComment = document.createElement('div');
+    newComment.className = 'comment-item';
+    newComment.innerHTML = `<span class="nickname">${nickname}</span>${content}`;
+    commentsEl.appendChild(newComment);
+    input.value = '';
+  }
+
+  // 피드 렌더링
+  async function renderFeed(posts) {
+    const feed = document.getElementById('feed');
+    if (!posts.length) {
+      feed.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🎬</div>
+          <h3>아직 영상이 없어요</h3>
+          <p>첫 번째 AI 영상을 올려보세요!</p>
+        </div>`;
+      return;
+    }
+
+    feed.innerHTML = '';
+    for (const post of posts) {
+      const [{ data: votes }, { data: reactions }, { data: comments }] = await Promise.all([
+        supabase.from('votes').select('*').eq('post_id', post.id),
+        supabase.from('reactions').select('*').eq('post_id', post.id),
+        supabase.from('comments').select('*').eq('post_id', post.id).order('created_at', { ascending: false }).limit(3),
+      ]);
+
+      const div = document.createElement('div');
+      div.innerHTML = renderCard(post, votes || [], reactions || [], comments || []);
+      feed.appendChild(div.firstElementChild);
+    }
+  }
+
+  // 초기 로드
+  async function loadFeed() {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      document.getElementById('feed').innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h3>불러오기 실패</h3><p>${error.message}</p></div>`;
+      return;
+    }
+
+    allPosts = data || [];
+    renderFeed(allPosts);
+  }
+
+  loadFeed();
+</script>
+</body>
+</html>

@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIFlick 관리자</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #111111;
+      --card2: #1a1a1a;
+      --border: #222222;
+      --accent: #ff3c3c;
+      --text: #f0f0f0;
+      --muted: #666666;
+      --success: #00dc64;
+      --radius: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* LOGIN */
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #ff3c3c, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .login-sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--muted); }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    .error-msg {
+      background: rgba(255,60,60,0.1);
+      border: 1px solid rgba(255,60,60,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--accent);
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* ADMIN LAYOUT */
+    .admin-wrap { display: none; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #ff3c3c, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-email {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .home-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .home-btn:hover { border-color: #444; color: var(--text); }
+
+    /* ADMIN CONTENT */
+    .admin-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 20px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* UPLOAD FORM */
+    .upload-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group-full { grid-column: 1 / -1; }
+
+    select.form-input {
+      cursor: pointer;
+    }
+
+    .youtube-preview {
+      margin-top: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .youtube-preview img {
+      width: 100%;
+      max-width: 320px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .btn-submit {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 12px 28px;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-submit:hover { opacity: 0.85; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .success-msg {
+      background: rgba(0,220,100,0.1);
+      border: 1px solid rgba(0,220,100,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--success);
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* POST LIST */
+    .posts-table {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 1fr 100px 100px 80px;
+      padding: 12px 16px;
+      background: var(--card2);
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 100px 80px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      align-items: center;
+      transition: background 0.15s;
+    }
+
+    .table-row:hover { background: var(--card2); }
+
+    .post-title-cell {
+      font-size: 14px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .post-category-cell { font-size: 13px; color: var(--muted); }
+    .post-date-cell { font-size: 12px; color: var(--muted); }
+
+    .delete-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .delete-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .empty-posts {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .table-header, .table-row {
+        grid-template-columns: 1fr 80px 60px;
+      }
+      .post-date-cell { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 로그인 화면 -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">AIFlick</div>
+    <div class="login-sub">관리자 로그인</div>
+    <div class="form-group">
+      <label class="form-label">이메일</label>
+      <input class="form-input" type="email" id="login-email" placeholder="admin@email.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">비밀번호</label>
+      <input class="form-input" type="password" id="login-password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">로그인</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- 어드민 화면 -->
+<div class="admin-wrap" id="admin-wrap">
+  <header>
+    <div class="logo">AIFlick Admin</div>
+    <div class="header-right">
+      <span class="user-email" id="user-email"></span>
+      <a href="index.html" class="home-btn">← 사이트</a>
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="admin-content">
+
+    <!-- 통계 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number" id="stat-posts">0</div>
+        <div class="stat-label">영상</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="stat-votes">0</div>
+        <div class="stat-label">투표</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="stat-reactions">0</div>
+        <div class="stat-label">리액션</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="stat-comments">0</div>
+        <div class="stat-label">댓글</div>
+      </div>
+    </div>
+
+    <!-- 영상 업로드 -->
+    <div class="upload-card">
+      <div class="section-title">📤 영상 업로드</div>
+      <div class="form-row">
+        <div class="form-group form-group-full">
+          <label class="form-label">YouTube URL *</label>
+          <input class="form-input" type="url" id="video-url"
+            placeholder="https://www.youtube.com/watch?v=..."
+            oninput="previewYoutube(this.value)">
+          <div class="youtube-preview" id="yt-preview">
+            <img id="yt-thumb" src="" alt="썸네일 미리보기">
+          </div>
+        </div>
+        <div class="form-group form-group-full">
+          <label class="form-label">제목 *</label>
+          <input class="form-input" type="text" id="video-title" placeholder="영상 제목을 입력하세요">
+        </div>
+        <div class="form-group">
+          <label class="form-label">카테고리</label>
+          <select class="form-input" id="video-category">
+            <option value="hot">🔥 핫</option>
+            <option value="funny">😂 웃긴</option>
+            <option value="guess">❓ 맞춰봐</option>
+            <option value="lab">🧪 실험실</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">썸네일 URL (선택)</label>
+          <input class="form-input" type="url" id="video-thumb" placeholder="비워두면 YouTube 자동 적용">
+        </div>
+      </div>
+      <button class="btn-submit" id="upload-btn" onclick="uploadPost()">업로드</button>
+      <div class="success-msg" id="upload-success">✅ 업로드 완료!</div>
+      <div class="error-msg" id="upload-error"></div>
+    </div>
+
+    <!-- 영상 목록 -->
+    <div class="section-title">📋 영상 목록</div>
+    <div class="posts-table">
+      <div class="table-header">
+        <div>제목</div>
+        <div>카테고리</div>
+        <div>날짜</div>
+        <div>관리</div>
+      </div>
+      <div id="posts-list">
+        <div class="empty-posts">로딩 중...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nhjnotsgolywogbvzisz.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oam5vdHNnb2x5d29nYnZ6aXN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTk1ODUsImV4cCI6MjA5MDQzNTU4NX0.xaoVp6C0POxLCIk3bnjYYHxuSzRBdh__gc_RkfoFjN8';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentUser = null;
+
+  // YouTube ID 추출
+  function getYouTubeId(url) {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&\n?#]+)/);
+    return match ? match[1] : null;
+  }
+
+  // YouTube 썸네일 미리보기
+  function previewYoutube(url) {
+    const id = getYouTubeId(url);
+    const preview = document.getElementById('yt-preview');
+    const thumb = document.getElementById('yt-thumb');
+    if (id) {
+      thumb.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  // 로그인
+  async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errEl = document.getElementById('login-error');
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errEl.textContent = '로그인 실패: ' + error.message;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // admin 체크
+    const { data: profile } = await supabase
+      .from('profiles').select('is_admin').eq('id', data.user.id).single();
+
+    if (!profile?.is_admin) {
+      await supabase.auth.signOut();
+      errEl.textContent = '관리자 권한이 없습니다.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    currentUser = data.user;
+    showAdmin();
+  }
+
+  // 로그아웃
+  async function doLogout() {
+    await supabase.auth.signOut();
+    document.getElementById('login-wrap').style.display = 'flex';
+    document.getElementById('admin-wrap').style.display = 'none';
+    currentUser = null;
+  }
+
+  // 어드민 화면 표시
+  function showAdmin() {
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('admin-wrap').style.display = 'block';
+    document.getElementById('user-email').textContent = currentUser.email;
+    loadStats();
+    loadPosts();
+  }
+
+  // 통계 로드
+  async function loadStats() {
+    const [posts, votes, reactions, comments] = await Promise.all([
+      supabase.from('posts').select('id', { count: 'exact' }),
+      supabase.from('votes').select('id', { count: 'exact' }),
+      supabase.from('reactions').select('id', { count: 'exact' }),
+      supabase.from('comments').select('id', { count: 'exact' }),
+    ]);
+
+    document.getElementById('stat-posts').textContent = posts.count || 0;
+    document.getElementById('stat-votes').textContent = votes.count || 0;
+    document.getElementById('stat-reactions').textContent = reactions.count || 0;
+    document.getElementById('stat-comments').textContent = comments.count || 0;
+  }
+
+  // 영상 목록 로드
+  async function loadPosts() {
+    const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+    const list = document.getElementById('posts-list');
+
+    if (!data || !data.length) {
+      list.innerHTML = '<div class="empty-posts">아직 업로드된 영상이 없어요</div>';
+      return;
+    }
+
+    const catLabel = { hot: '🔥 핫', funny: '😂 웃긴', guess: '❓ 맞춰봐', lab: '🧪 실험실' };
+    list.innerHTML = data.map(post => `
+      <div class="table-row">
+        <div class="post-title-cell">${post.title}</div>
+        <div class="post-category-cell">${catLabel[post.category] || post.category}</div>
+        <div class="post-date-cell">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div>
+        <div><button class="delete-btn" onclick="deletePost('${post.id}', this)">삭제</button></div>
+      </div>
+    `).join('');
+  }
+
+  // 업로드
+  async function uploadPost() {
+    const url = document.getElementById('video-url').value.trim();
+    const title = document.getElementById('video-title').value.trim();
+    const category = document.getElementById('video-category').value;
+    const thumb = document.getElementById('video-thumb').value.trim();
+    const btn = document.getElementById('upload-btn');
+    const successEl = document.getElementById('upload-success');
+    const errorEl = document.getElementById('upload-error');
+
+    successEl.style.display = 'none';
+    errorEl.style.display = 'none';
+
+    if (!url || !title) {
+      errorEl.textContent = 'URL과 제목은 필수입니다.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    if (!getYouTubeId(url)) {
+      errorEl.textContent = '올바른 YouTube URL을 입력해주세요.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '업로드 중...';
+
+    const ytId = getYouTubeId(url);
+    const thumbnailUrl = thumb || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+
+    const { error } = await supabase.from('posts').insert({
+      title,
+      video_url: url,
+      video_type: 'youtube',
+      thumbnail_url: thumbnailUrl,
+      category,
+    });
+
+    btn.disabled = false;
+    btn.textContent = '업로드';
+
+    if (error) {
+      errorEl.textContent = '업로드 실패: ' + error.message;
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    successEl.style.display = 'block';
+    document.getElementById('video-url').value = '';
+    document.getElementById('video-title').value = '';
+    document.getElementById('video-thumb').value = '';
+    document.getElementById('yt-preview').style.display = 'none';
+    loadPosts();
+    loadStats();
+  }
+
+  // 삭제
+  async function deletePost(id, btn) {
+    if (!confirm('정말 삭제하시겠어요?')) return;
+    btn.textContent = '삭제 중...';
+    await supabase.from('posts').delete().eq('id', id);
+    loadPosts();
+    loadStats();
+  }
+
+  // 세션 확인
+  async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const { data: profile } = await supabase
+        .from('profiles').select('is_admin').eq('id', session.user.id).single();
+      if (profile?.is_admin) {
+        currentUser = session.user;
+        showAdmin();
+        return;
+      }
+    }
+    document.getElementById('login-wrap').style.display = 'flex';
+  }
+
+  checkSession();
+</script>
+</body>
+</html>
