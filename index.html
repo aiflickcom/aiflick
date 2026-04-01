@@ -33,15 +33,29 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(10,10,10,0.92);
+      background: rgba(10,10,10,0.95);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 60px;
+    }
+
+    .header-top {
+      padding: 0 16px;
+      height: 52px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
+
+    .header-bottom {
+      padding: 0 12px 10px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .header-bottom::-webkit-scrollbar { display: none; }
 
     .logo {
       font-family: 'Bebas Neue', sans-serif;
@@ -67,6 +81,8 @@
       cursor: pointer;
       font-family: 'Noto Sans KR', sans-serif;
       transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .nav-btn:hover, .nav-btn.active {
@@ -103,10 +119,10 @@
     .feed-container {
       max-width: 680px;
       margin: 0 auto;
-      padding: 24px 16px;
+      padding: 12px 16px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 12px;
     }
 
     /* VIDEO CARD */
@@ -202,6 +218,12 @@
       line-height: 1.4;
       margin-bottom: 14px;
       color: var(--text);
+    }
+
+    .vote-participants {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 6px 0 4px;
     }
 
     /* VOTE BUTTONS */
@@ -434,13 +456,6 @@
     }
 
     @media (max-width: 480px) {
-      .header-nav {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        max-width: calc(100vw - 180px);
-      }
-      .header-nav::-webkit-scrollbar { display: none; }
       .feed-container { padding: 16px 12px; }
       .card-title { font-size: 15px; }
     }
@@ -449,16 +464,18 @@
 <body>
 
 <header>
-  <a href="index.html" class="logo" style="text-decoration:none">AIFlick</a>
-  <nav class="header-nav">
+  <div class="header-top">
+    <a href="index.html" class="logo" style="text-decoration:none">AIFlick</a>
+    <div class="header-right">
+      <a href="admin.html" class="admin-btn">관리자</a>
+    </div>
+  </div>
+  <div class="header-bottom">
     <button class="nav-btn active" onclick="filterFeed('all')">전체</button>
     <button class="nav-btn" onclick="filterFeed('hot')">🔥 핫</button>
     <button class="nav-btn" onclick="filterFeed('funny')">😂 웃긴</button>
     <button class="nav-btn" onclick="filterFeed('guess')">❓ 맞춰봐</button>
     <button class="nav-btn" onclick="filterFeed('lab')">🧪 실험실</button>
-  </nav>
-  <div class="header-right">
-    <a href="admin.html" class="admin-btn">관리자</a>
   </div>
 </header>
 
@@ -567,7 +584,7 @@
 
         <div class="vote-section">
           ${post.category === 'guess' ? `
-            <div class="vote-label">이 영상, AI야 진짜야?</div>
+            <div class="vote-label">이 영상, AI야 진짜야? 👇 눈 보면 티난다</div>
             <div class="vote-buttons">
               <button class="vote-btn ai-btn ${myVote?.vote_type === 'ai' ? 'voted' : ''}"
                 onclick="vote('${post.id}', 'ai')">🤖 AI 같다</button>
@@ -575,7 +592,7 @@
                 onclick="vote('${post.id}', 'real')">👤 진짜 같다</button>
             </div>
           ` : post.category === 'lab' ? `
-            <div class="vote-label">어떤 AI 툴로 만들었을까?</div>
+            <div class="vote-label">어떤 AI 툴로 만들었을까? 맞춰봐 👇</div>
             <div class="vote-buttons">
               <button class="vote-btn ai-btn ${myVote?.vote_type === 'ai' ? 'voted' : ''}"
                 onclick="vote('${post.id}', 'ai')">🤔 맞출 수 있다!</button>
@@ -583,7 +600,7 @@
                 onclick="vote('${post.id}', 'real')">😵 모르겠다</button>
             </div>
           ` : `
-            <div class="vote-label">이 영상 어때?</div>
+            <div class="vote-label">이 영상 어때? 솔직하게 눌러봐 👇</div>
             <div class="vote-buttons">
               <button class="vote-btn ai-btn ${myVote?.vote_type === 'ai' ? 'voted' : ''}"
                 onclick="vote('${post.id}', 'ai')">🔥 대박이다</button>
@@ -591,6 +608,7 @@
                 onclick="vote('${post.id}', 'real')">😐 별로다</button>
             </div>
           `}
+          <div class="vote-participants">${total > 0 ? `👥 ${total}명이 투표했어요` : '첫 번째로 투표해보세요!'}</div>
           <div class="vote-result ${myVote || total > 0 ? 'show' : ''}" id="result-${post.id}">
             <div class="vote-bar-wrap">
               <div class="vote-bar-ai" style="width:${aiPct}%"></div>
