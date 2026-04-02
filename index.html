@@ -41,8 +41,8 @@
     #shorts-wrap.active { display: block; }
     .short-item { height: 100dvh; width: 100%; scroll-snap-align: start; position: relative; background: #000; overflow: hidden; }
     .short-item iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-    .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 70px 50px 16px; background: linear-gradient(transparent, rgba(0,0,0,0.85)); z-index: 10; }
-    .short-right { position: absolute; right: 12px; bottom: 120px; display: flex; flex-direction: column; gap: 18px; align-items: center; z-index: 10; }
+    .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 70px 90px 16px; background: linear-gradient(transparent, rgba(0,0,0,0.92)); z-index: 10; }
+    .short-right { position: absolute; right: 12px; bottom: 160px; display: flex; flex-direction: column; gap: 18px; align-items: center; z-index: 10; }
     .short-action { display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .short-action-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
     .short-action-btn:hover { background: rgba(255,255,255,0.25); }
@@ -149,6 +149,37 @@
 
     .upload-type-btn { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
     .upload-type-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    /* 커스텀 비디오 컨트롤 */
+    .video-controls {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 15;
+      padding: 8px 12px 12px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.6));
+      display: none;
+    }
+    .video-controls.show { display: block; }
+    .video-progress-wrap {
+      width: 100%; height: 3px; background: rgba(255,255,255,0.3);
+      border-radius: 2px; cursor: pointer; margin-bottom: 8px;
+    }
+    .video-progress-bar {
+      height: 100%; background: var(--accent); border-radius: 2px;
+      width: 0%; transition: width 0.1s linear;
+    }
+    .video-ctrl-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .video-ctrl-btn {
+      background: transparent; border: none; cursor: pointer;
+      padding: 4px; display: flex; align-items: center;
+    }
+    .video-ctrl-btn svg { width: 20px; height: 20px; fill: white; }
+    .video-time {
+      font-size: 12px; color: rgba(255,255,255,0.85);
+      font-family: monospace; margin-left: 4px;
+    }
+    .video-tap-area {
+      position: absolute; top: 0; left: 0; right: 70px; bottom: 0; z-index: 12; cursor: pointer;
+    }
     .loading { text-align: center; padding: 60px; color: var(--muted); }
     .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -534,6 +565,7 @@
       const div = document.createElement('div');
       div.className = 'short-item';
       div.dataset.videoUrl = post.video_url;
+      div.dataset.postId = post.id;
       div.dataset.videoUrl = post.video_url;
       div.innerHTML = `
         <div class="short-logo">AIFlick</div>
@@ -566,45 +598,127 @@
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         const item = entry.target;
-        const placeholder = item.querySelector('.short-video-placeholder');
-        const existingVideo = item.querySelector('iframe, video');
+        const url = item.dataset.videoUrl;
 
         if (entry.isIntersecting) {
-          // 화면에 들어오면 영상 로드
-          if (placeholder && !existingVideo) {
-            const url = item.dataset.videoUrl;
+          // 화면에 들어오면 영상 생성
+          if (!item.querySelector('iframe, video')) {
+            const placeholder = item.querySelector('.short-video-placeholder');
             if (isDirectVideo(url)) {
               const v = document.createElement('video');
-              v.src = url; v.autoplay = true; v.loop = true; v.playsInline = true;
-              v.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;';
-              placeholder.replaceWith(v);
+              v.src = url; v.autoplay = true; v.playsInline = true;
+              v.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1;';
+              if (placeholder) placeholder.replaceWith(v); else item.prepend(v);
+
+              // 커스텀 컨트롤 생성
+              const ctrl = document.createElement('div');
+              ctrl.className = 'video-controls show';
+              ctrl.innerHTML = `
+                <div class="video-progress-wrap" id="prog-wrap-${item.dataset.postId}">
+                  <div class="video-progress-bar" id="prog-bar-${item.dataset.postId}"></div>
+                </div>
+                <div class="video-ctrl-row">
+                  <button class="video-ctrl-btn" id="play-btn-${item.dataset.postId}" onclick="togglePlay('${item.dataset.postId}')">
+                    <svg id="play-icon-${item.dataset.postId}" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  </button>
+                  <button class="video-ctrl-btn" onclick="toggleMute('${item.dataset.postId}')">
+                    <svg id="mute-icon-${item.dataset.postId}" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                  </button>
+                  <span class="video-time" id="time-${item.dataset.postId}">0:00 / 0:00</span>
+                </div>`;
+              item.appendChild(ctrl);
+
+              // 탭으로 재생/정지
+              const tapArea = document.createElement('div');
+              tapArea.className = 'video-tap-area';
+              tapArea.onclick = () => togglePlay(item.dataset.postId);
+              item.appendChild(tapArea);
+
+              // 진행바 업데이트
+              v.addEventListener('timeupdate', () => updateProgress(item.dataset.postId, v));
+              v.addEventListener('loadedmetadata', () => updateProgress(item.dataset.postId, v));
+
+              // 진행바 클릭으로 seek
+              const progWrap = ctrl.querySelector('.video-progress-wrap');
+              progWrap.addEventListener('click', (e) => {
+                const rect = progWrap.getBoundingClientRect();
+                const pct = (e.clientX - rect.left) / rect.width;
+                v.currentTime = pct * v.duration;
+              });
+
+              item.dataset.videoEl = 'direct';
             } else {
               const f = document.createElement('iframe');
               f.src = getEmbed(url);
               f.allowFullscreen = true; f.allow = 'autoplay; fullscreen';
-              f.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
-              placeholder.replaceWith(f);
+              f.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;z-index:1;';
+              if (placeholder) placeholder.replaceWith(f); else item.prepend(f);
             }
-          } else if (existingVideo && existingVideo.tagName === 'VIDEO') {
-            existingVideo.play();
+          } else {
+            const v = item.querySelector('video');
+            if (v) v.play();
           }
         } else {
-          // 화면에서 나가면 영상 정지
-          if (existingVideo) {
-            if (existingVideo.tagName === 'VIDEO') {
-              existingVideo.pause();
-            } else if (existingVideo.tagName === 'IFRAME') {
-              // iframe 재로드로 정지
-              const src = existingVideo.src;
-              existingVideo.src = '';
-              existingVideo.src = src;
-            }
+          // 화면에서 나가면 완전히 제거 (소리 완전 차단)
+          const iframe = item.querySelector('iframe');
+          const video = item.querySelector('video');
+          if (iframe) {
+            iframe.remove();
+            // placeholder 복원
+            const ph = document.createElement('div');
+            ph.className = 'short-video-placeholder';
+            ph.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;z-index:1;';
+            ph.innerHTML = '<div style="width:40px;height:40px;border:2px solid #333;border-top-color:#ff3c3c;border-radius:50%;animation:spin 0.8s linear infinite;"></div>';
+            item.prepend(ph);
           }
+          if (video) { video.pause(); video.src = ''; video.remove(); }
         }
       });
-    }, { threshold: 0.6 });
+    }, { threshold: 0.7 });
 
     wrap.querySelectorAll('.short-item').forEach(item => observer.observe(item));
+  }
+
+  // 직접 업로드 영상 컨트롤 함수
+  function getVideoEl(postId) {
+    const item = document.querySelector(`.short-item[data-post-id="${postId}"]`);
+    return item ? item.querySelector('video') : null;
+  }
+
+  function togglePlay(postId) {
+    const v = getVideoEl(postId);
+    if (!v) return;
+    const icon = document.getElementById(`play-icon-${postId}`);
+    if (v.paused) {
+      v.play();
+      icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    } else {
+      v.pause();
+      icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    }
+  }
+
+  function toggleMute(postId) {
+    const v = getVideoEl(postId);
+    if (!v) return;
+    v.muted = !v.muted;
+    const icon = document.getElementById(`mute-icon-${postId}`);
+    icon.innerHTML = v.muted
+      ? '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
+      : '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+  }
+
+  function formatTime(sec) {
+    if (isNaN(sec)) return '0:00';
+    const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function updateProgress(postId, v) {
+    const bar = document.getElementById(`prog-bar-${postId}`);
+    const time = document.getElementById(`time-${postId}`);
+    if (bar && v.duration) bar.style.width = (v.currentTime / v.duration * 100) + '%';
+    if (time) time.textContent = `${formatTime(v.currentTime)} / ${formatTime(v.duration)}`;
   }
 
   async function shortVote(postId, type, btn) {
