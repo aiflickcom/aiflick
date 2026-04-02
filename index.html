@@ -41,7 +41,7 @@
     #shorts-wrap.active { display: block; }
     .short-item { height: 100dvh; width: 100%; scroll-snap-align: start; position: relative; background: #000; overflow: hidden; }
     .short-item iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-    .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 70px 90px 16px; background: linear-gradient(transparent, rgba(0,0,0,0.92)); z-index: 10; }
+    .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 70px 80px 16px; background: linear-gradient(transparent, rgba(0,0,0,0.88)); z-index: 10; }
     .short-right { position: absolute; right: 12px; bottom: 160px; display: flex; flex-direction: column; gap: 18px; align-items: center; z-index: 10; }
     .short-action { display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .short-action-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
@@ -51,8 +51,8 @@
     .short-logo { position: absolute; top: 60px; left: 16px; z-index: 10; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; background: linear-gradient(90deg, #ff3c3c, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .short-category { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
     .short-title { font-size: 15px; font-weight: 700; color: white; margin-bottom: 10px; line-height: 1.4; }
-    .short-vote { display: flex; gap: 8px; }
-    .short-vote-btn { flex: 1; background: rgba(255,255,255,0.12); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 8px 6px; text-align: center; font-size: 12px; font-weight: 700; color: white; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
+    .short-vote { display: flex; gap: 8px; justify-content: flex-start; }
+    .short-vote-btn { background: rgba(255,255,255,0.12); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 8px 20px; text-align: center; font-size: 13px; font-weight: 700; color: white; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; white-space: nowrap; }
     .short-vote-btn:hover { background: rgba(255,60,60,0.3); border-color: var(--accent); }
     .short-vote-btn.voted-ai { background: rgba(0,200,255,0.3); border-color: #00c8ff; }
     .short-vote-btn.voted-real { background: rgba(0,220,100,0.3); border-color: #00dc64; }
@@ -152,14 +152,14 @@
     /* 커스텀 비디오 컨트롤 */
     .video-controls {
       position: absolute; bottom: 0; left: 0; right: 0; z-index: 15;
-      padding: 8px 12px 12px;
-      background: linear-gradient(transparent, rgba(0,0,0,0.6));
+      padding: 6px 12px 8px;
+      background: rgba(0,0,0,0.5);
       display: none;
     }
     .video-controls.show { display: block; }
     .video-progress-wrap {
       width: 100%; height: 3px; background: rgba(255,255,255,0.3);
-      border-radius: 2px; cursor: pointer; margin-bottom: 8px;
+      border-radius: 2px; cursor: pointer; margin-bottom: 6px;
     }
     .video-progress-bar {
       height: 100%; background: var(--accent); border-radius: 2px;
@@ -172,10 +172,10 @@
       background: transparent; border: none; cursor: pointer;
       padding: 4px; display: flex; align-items: center;
     }
-    .video-ctrl-btn svg { width: 20px; height: 20px; fill: white; }
+    .video-ctrl-btn svg { width: 18px; height: 18px; fill: white; }
     .video-time {
-      font-size: 12px; color: rgba(255,255,255,0.85);
-      font-family: monospace; margin-left: 4px;
+      font-size: 11px; color: rgba(255,255,255,0.85);
+      font-family: monospace;
     }
     .video-tap-area {
       position: absolute; top: 0; left: 0; right: 70px; bottom: 0; z-index: 12; cursor: pointer;
@@ -550,11 +550,11 @@
 
       const voteSection = (post.category === 'guess' || post.category === 'lab')
         ? (currentUser
-          ? `<div class="short-vote">
+          ? `<div style="margin-bottom:6px;font-size:11px;color:rgba(255,255,255,0.5);">${total > 0 ? `👥 ${total}명 투표` : '첫 번째로 투표해보세요!'}</div>
+            <div class="short-vote">
               <button class="short-vote-btn ${myVote?.vote_type==='ai'?'voted-ai':''}" onclick="shortVote('${post.id}','ai',this)">${voteBtn1}</button>
               <button class="short-vote-btn ${myVote?.vote_type==='real'?'voted-real':''}" onclick="shortVote('${post.id}','real',this)">${voteBtn2}</button>
-            </div>
-            ${total > 0 ? `<div class="short-vote-count">👥 ${total}명 투표</div>` : ''}`
+            </div>`
           : `<div class="short-login-prompt" onclick="showLoginModal()">👆 로그인하면 투표할 수 있어요</div>`)
         : '';
 
