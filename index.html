@@ -147,6 +147,8 @@
     .login-close-btn { margin-top: 14px; background: transparent; border: none; color: var(--muted); font-size: 13px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
     .login-close-btn:hover { color: var(--text); }
 
+    .upload-type-btn { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
+    .upload-type-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
     .loading { text-align: center; padding: 60px; color: var(--muted); }
     .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -222,6 +224,60 @@
   </div>
 </div>
 
+<!-- 업로드 모달 -->
+<div class="login-modal" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
+  <div class="login-box" style="max-width:440px;text-align:left;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="login-logo-big" style="font-size:24px;">영상 올리기</div>
+      <button onclick="closeUploadModal()" style="background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;">×</button>
+    </div>
+
+    <!-- 업로드 방식 탭 -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <button class="upload-type-btn active" id="u-type-youtube" onclick="setUserUploadType('youtube')" style="flex:1;">🔗 YouTube URL</button>
+      <button class="upload-type-btn" id="u-type-file" onclick="setUserUploadType('file')" style="flex:1;">📁 파일 업로드</button>
+    </div>
+
+    <div id="u-youtube-section">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">YouTube URL *</label>
+        <input class="comment-input" type="url" id="u-video-url" placeholder="https://www.youtube.com/watch?v=..." style="width:100%;" oninput="previewUserYoutube(this.value)">
+        <div id="u-yt-preview" style="display:none;margin-top:8px;"><img id="u-yt-thumb" src="" style="width:100%;max-width:280px;border-radius:6px;border:1px solid var(--border);"></div>
+      </div>
+    </div>
+
+    <div id="u-file-section" style="display:none;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">영상 파일 * (최대 50MB)</label>
+        <input class="comment-input" type="file" id="u-video-file" accept="video/mp4,video/webm,video/quicktime" style="width:100%;" onchange="previewUserFile(this)">
+        <div id="u-file-preview" style="font-size:12px;color:var(--muted);margin-top:5px;"></div>
+        <div id="u-progress-wrap" style="display:none;margin-top:8px;">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:3px;">업로드 중... <span id="u-progress-pct">0</span>%</div>
+          <div style="background:var(--border);border-radius:4px;height:5px;"><div id="u-progress-bar" style="background:var(--accent);height:5px;border-radius:4px;width:0%;transition:width 0.3s;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">제목 *</label>
+      <input class="comment-input" type="text" id="u-video-title" placeholder="영상 제목을 입력하세요" style="width:100%;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">카테고리</label>
+      <select class="comment-input" id="u-video-category" style="width:100%;cursor:pointer;">
+        <option value="hot">🔥 핫</option>
+        <option value="funny">😂 웃긴</option>
+        <option value="guess">❓ 맞춰봐</option>
+        <option value="lab">🧪 실험실</option>
+      </select>
+    </div>
+
+    <button class="comment-submit" id="u-upload-btn" onclick="submitUserUpload()" style="width:100%;padding:12px;font-size:14px;border-radius:10px;">업로드</button>
+    <div id="u-upload-error" style="display:none;margin-top:10px;font-size:13px;color:var(--accent);"></div>
+    <div id="u-upload-success" style="display:none;margin-top:10px;font-size:13px;color:#00dc64;">✅ 업로드 완료! 잠시 후 피드에 표시돼요.</div>
+  </div>
+</div>
+
 <!-- 로그인 모달 -->
 <div class="login-modal" id="login-modal" onclick="if(event.target===this)closeLoginModal()">
   <div class="login-box">
@@ -272,15 +328,26 @@
     });
   }
 
-  function updateAuthUI() {
+  async function updateAuthUI() {
     const area = document.getElementById('auth-area');
     if (currentUser) {
       const avatar = currentUser.user_metadata?.avatar_url;
       const name = currentUser.user_metadata?.full_name || currentUser.email;
       document.getElementById('user-name-display').textContent = name;
-      area.innerHTML = avatar
-        ? `<img class="user-avatar" src="${avatar}" onclick="toggleUserMenu()">`
-        : `<button class="login-btn" onclick="toggleUserMenu()">${name.slice(0,6)}</button>`;
+
+      // admin 여부 확인
+      const { data: profile } = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).single();
+      const isAdmin = profile?.is_admin;
+
+      area.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${isAdmin
+            ? `<a href="admin.html" style="background:var(--accent);border:none;color:white;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;text-decoration:none;font-family:'Noto Sans KR',sans-serif;">관리자</a>`
+            : `<button class="login-btn" style="border-color:var(--accent);color:var(--accent);" onclick="showUploadModal()">+ 올리기</button>`}
+          ${avatar
+            ? `<img class="user-avatar" src="${avatar}" onclick="toggleUserMenu()">`
+            : `<button class="login-btn" onclick="toggleUserMenu()">${name.slice(0,6)}</button>`}
+        </div>`;
     } else {
       area.innerHTML = `<button class="login-btn" onclick="showLoginModal()">로그인</button>`;
     }
@@ -298,6 +365,98 @@
   async function doLogout() { await sb.auth.signOut(); document.getElementById('user-menu').classList.remove('show'); }
   function showLoginModal() { document.getElementById('login-modal').classList.add('show'); }
   function closeLoginModal() { document.getElementById('login-modal').classList.remove('show'); }
+  function showUploadModal() { document.getElementById('upload-modal').classList.add('show'); }
+  function closeUploadModal() {
+    document.getElementById('upload-modal').classList.remove('show');
+    document.getElementById('u-upload-success').style.display = 'none';
+    document.getElementById('u-upload-error').style.display = 'none';
+  }
+
+  let userUploadType = 'youtube';
+  function setUserUploadType(type) {
+    userUploadType = type;
+    document.getElementById('u-type-youtube').classList.toggle('active', type === 'youtube');
+    document.getElementById('u-type-file').classList.toggle('active', type === 'file');
+    document.getElementById('u-youtube-section').style.display = type === 'youtube' ? 'block' : 'none';
+    document.getElementById('u-file-section').style.display = type === 'file' ? 'block' : 'none';
+  }
+
+  function previewUserYoutube(url) {
+    const id = getYouTubeId(url);
+    const preview = document.getElementById('u-yt-preview');
+    if (id) { document.getElementById('u-yt-thumb').src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; }
+  }
+
+  function previewUserFile(input) {
+    const file = input.files[0];
+    const preview = document.getElementById('u-file-preview');
+    if (!file) { preview.textContent = ''; return; }
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    if (file.size > 50 * 1024 * 1024) {
+      preview.innerHTML = '<span style="color:var(--accent)">⚠️ 50MB 초과예요. 더 작은 파일을 선택해주세요.</span>';
+      input.value = ''; return;
+    }
+    preview.textContent = `✅ ${file.name} (${sizeMB}MB)`;
+  }
+
+  async function submitUserUpload() {
+    if (!currentUser) { showLoginModal(); return; }
+    const title = document.getElementById('u-video-title').value.trim();
+    const category = document.getElementById('u-video-category').value;
+    const btn = document.getElementById('u-upload-btn');
+    const errorEl = document.getElementById('u-upload-error');
+    const successEl = document.getElementById('u-upload-success');
+    errorEl.style.display = 'none'; successEl.style.display = 'none';
+
+    if (!title) { errorEl.textContent = '제목을 입력해주세요.'; errorEl.style.display = 'block'; return; }
+
+    btn.disabled = true; btn.textContent = '업로드 중...';
+
+    try {
+      if (userUploadType === 'youtube') {
+        const url = document.getElementById('u-video-url').value.trim();
+        if (!url || !getYouTubeId(url)) { errorEl.textContent = '올바른 YouTube URL을 입력해주세요.'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = '업로드'; return; }
+        const ytId = getYouTubeId(url);
+        const thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        const { error } = await sb.from('posts').insert({ title, video_url: url, video_type: 'youtube', thumbnail_url: thumbnailUrl, category });
+        if (error) throw error;
+        document.getElementById('u-video-url').value = '';
+        document.getElementById('u-yt-preview').style.display = 'none';
+      } else {
+        const fileInput = document.getElementById('u-video-file');
+        const file = fileInput.files[0];
+        if (!file) { errorEl.textContent = '파일을 선택해주세요.'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = '업로드'; return; }
+        document.getElementById('u-progress-wrap').style.display = 'block';
+        const ext = file.name.split('.').pop();
+        const filePath = `public/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: upErr } = await sb.storage.from('videos').upload(filePath, file, {
+          cacheControl: '3600', upsert: false,
+          onUploadProgress: (p) => {
+            const pct = Math.round(p.loaded / p.total * 100);
+            document.getElementById('u-progress-pct').textContent = pct;
+            document.getElementById('u-progress-bar').style.width = pct + '%';
+          }
+        });
+        if (upErr) throw upErr;
+        const { data: { publicUrl } } = sb.storage.from('videos').getPublicUrl(filePath);
+        const { error: dbErr } = await sb.from('posts').insert({ title, video_url: publicUrl, video_type: 'upload', thumbnail_url: '', storage_path: filePath, category });
+        if (dbErr) throw dbErr;
+        document.getElementById('u-progress-wrap').style.display = 'none';
+        fileInput.value = ''; document.getElementById('u-file-preview').textContent = '';
+      }
+
+      document.getElementById('u-video-title').value = '';
+      successEl.style.display = 'block';
+      await loadAll();
+      setTimeout(() => closeUploadModal(), 2000);
+    } catch (err) {
+      errorEl.textContent = '업로드 실패: ' + err.message;
+      errorEl.style.display = 'block';
+      document.getElementById('u-progress-wrap').style.display = 'none';
+    }
+    btn.disabled = false; btn.textContent = '업로드';
+  }
 
   // 뷰 전환
   function setView(v) {
@@ -355,16 +514,18 @@
       const likeCount = (reactions||[]).filter(r => r.type === 'like').length;
       const cmtCount = (comments||[]).length;
 
-      const voteBtn1 = post.category === 'guess' ? '🤖 AI 같다' : post.category === 'lab' ? '🤔 맞출 수 있다' : '🔥 대박';
-      const voteBtn2 = post.category === 'guess' ? '👤 진짜 같다' : post.category === 'lab' ? '😵 모르겠다' : '😐 별로';
+      const voteBtn1 = post.category === 'guess' ? '🤖 AI 같다' : '🤔 맞출 수 있다';
+      const voteBtn2 = post.category === 'guess' ? '👤 진짜 같다' : '😵 모르겠다';
 
-      const voteSection = currentUser
-        ? `<div class="short-vote">
-            <button class="short-vote-btn ${myVote?.vote_type==='ai'?'voted-ai':''}" onclick="shortVote('${post.id}','ai',this)">${voteBtn1}</button>
-            <button class="short-vote-btn ${myVote?.vote_type==='real'?'voted-real':''}" onclick="shortVote('${post.id}','real',this)">${voteBtn2}</button>
-          </div>
-          ${total > 0 ? `<div class="short-vote-count">👥 ${total}명 투표</div>` : ''}`
-        : `<div class="short-login-prompt" onclick="showLoginModal()">👆 로그인하면 투표할 수 있어요</div>`;
+      const voteSection = (post.category === 'guess' || post.category === 'lab')
+        ? (currentUser
+          ? `<div class="short-vote">
+              <button class="short-vote-btn ${myVote?.vote_type==='ai'?'voted-ai':''}" onclick="shortVote('${post.id}','ai',this)">${voteBtn1}</button>
+              <button class="short-vote-btn ${myVote?.vote_type==='real'?'voted-real':''}" onclick="shortVote('${post.id}','real',this)">${voteBtn2}</button>
+            </div>
+            ${total > 0 ? `<div class="short-vote-count">👥 ${total}명 투표</div>` : ''}`
+          : `<div class="short-login-prompt" onclick="showLoginModal()">👆 로그인하면 투표할 수 있어요</div>`)
+        : '';
 
       items.push({ post, likeCount, cmtCount, voteSection });
     }
@@ -372,11 +533,13 @@
     items.forEach(({ post, likeCount, cmtCount, voteSection }) => {
       const div = document.createElement('div');
       div.className = 'short-item';
+      div.dataset.videoUrl = post.video_url;
+      div.dataset.videoUrl = post.video_url;
       div.innerHTML = `
         <div class="short-logo">AIFlick</div>
-        ${isDirectVideo(post.video_url)
-          ? `<video src="${post.video_url}" autoplay loop playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"></video>`
-          : `<iframe src="${getEmbed(post.video_url)}" allowfullscreen allow="autoplay; fullscreen"></iframe>`}
+        <div class="short-video-placeholder" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;">
+          <div style="width:40px;height:40px;border:2px solid #333;border-top-color:#ff3c3c;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        </div>
         <div class="short-right">
           <div class="short-action">
             <button class="short-action-btn" onclick="shortReact('${post.id}','like',this)">
@@ -398,6 +561,50 @@
         </div>`;
       wrap.appendChild(div);
     });
+
+    // IntersectionObserver: 화면에 보이는 영상만 재생
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const item = entry.target;
+        const placeholder = item.querySelector('.short-video-placeholder');
+        const existingVideo = item.querySelector('iframe, video');
+
+        if (entry.isIntersecting) {
+          // 화면에 들어오면 영상 로드
+          if (placeholder && !existingVideo) {
+            const url = item.dataset.videoUrl;
+            if (isDirectVideo(url)) {
+              const v = document.createElement('video');
+              v.src = url; v.autoplay = true; v.loop = true; v.playsInline = true;
+              v.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;';
+              placeholder.replaceWith(v);
+            } else {
+              const f = document.createElement('iframe');
+              f.src = getEmbed(url);
+              f.allowFullscreen = true; f.allow = 'autoplay; fullscreen';
+              f.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
+              placeholder.replaceWith(f);
+            }
+          } else if (existingVideo && existingVideo.tagName === 'VIDEO') {
+            existingVideo.play();
+          }
+        } else {
+          // 화면에서 나가면 영상 정지
+          if (existingVideo) {
+            if (existingVideo.tagName === 'VIDEO') {
+              existingVideo.pause();
+            } else if (existingVideo.tagName === 'IFRAME') {
+              // iframe 재로드로 정지
+              const src = existingVideo.src;
+              existingVideo.src = '';
+              existingVideo.src = src;
+            }
+          }
+        }
+      });
+    }, { threshold: 0.6 });
+
+    wrap.querySelectorAll('.short-item').forEach(item => observer.observe(item));
   }
 
   async function shortVote(postId, type, btn) {
@@ -437,24 +644,27 @@
       const voterId = getVoterId();
       const myVote = (votes||[]).find(v => v.voter_id===voterId);
       const reactionTypes = [{type:'hot',emoji:'🔥'},{type:'funny',emoji:'😂'},{type:'wow',emoji:'🤯'},{type:'like',emoji:'👍'}];
-      const vLabel = post.category==='guess' ? '이 영상, AI야 진짜야? 👇' : post.category==='lab' ? '어떤 AI 툴로 만들었을까? 👇' : '이 영상 어때? 솔직하게 👇';
-      const vBtn1 = post.category==='guess' ? '🤖 AI 같다' : post.category==='lab' ? '🤔 맞출 수 있다' : '🔥 대박이다';
-      const vBtn2 = post.category==='guess' ? '👤 진짜 같다' : post.category==='lab' ? '😵 모르겠다' : '😐 별로다';
+      const vLabel = post.category==='guess' ? '이 영상, AI야 진짜야? 👇' : '어떤 AI 툴로 만들었을까? 👇';
+      const vBtn1 = post.category==='guess' ? '🤖 AI 같다' : '🤔 맞출 수 있다';
+      const vBtn2 = post.category==='guess' ? '👤 진짜 같다' : '😵 모르겠다';
+      const showVote = post.category === 'guess' || post.category === 'lab';
 
-      const voteHTML = currentUser
-        ? `<div class="vote-section">
-            <div class="vote-label">${vLabel}</div>
-            <div class="vote-buttons">
-              <button class="vote-btn ai-btn ${myVote?.vote_type==='ai'?'voted':''}" onclick="feedVote('${post.id}','ai',this)">${vBtn1}</button>
-              <button class="vote-btn real-btn ${myVote?.vote_type==='real'?'voted':''}" onclick="feedVote('${post.id}','real',this)">${vBtn2}</button>
-            </div>
-            <div class="vote-participants">${total>0?`👥 ${total}명이 투표했어요`:'첫 번째로 투표해보세요!'}</div>
-            <div class="vote-result ${myVote||total>0?'show':''}" id="result-${post.id}">
-              <div class="vote-bar-wrap"><div class="vote-bar-ai" style="width:${aiPct}%"></div><div class="vote-bar-real" style="width:${realPct}%"></div></div>
-              <div class="vote-counts"><span class="vote-count-ai">${aiPct}% (${aiV}명)</span><span class="vote-count-real">${realPct}% (${realV}명)</span></div>
-            </div>
-          </div>`
-        : `<div class="login-prompt-inline" onclick="showLoginModal()">🔒 로그인하면 투표·댓글 참여 가능해요</div>`;
+      const voteHTML = showVote
+        ? (currentUser
+          ? `<div class="vote-section">
+              <div class="vote-label">${vLabel}</div>
+              <div class="vote-buttons">
+                <button class="vote-btn ai-btn ${myVote?.vote_type==='ai'?'voted':''}" onclick="feedVote('${post.id}','ai',this)">${vBtn1}</button>
+                <button class="vote-btn real-btn ${myVote?.vote_type==='real'?'voted':''}" onclick="feedVote('${post.id}','real',this)">${vBtn2}</button>
+              </div>
+              <div class="vote-participants">${total>0?`👥 ${total}명이 투표했어요`:'첫 번째로 투표해보세요!'}</div>
+              <div class="vote-result ${myVote||total>0?'show':''}" id="result-${post.id}">
+                <div class="vote-bar-wrap"><div class="vote-bar-ai" style="width:${aiPct}%"></div><div class="vote-bar-real" style="width:${realPct}%"></div></div>
+                <div class="vote-counts"><span class="vote-count-ai">${aiPct}% (${aiV}명)</span><span class="vote-count-real">${realPct}% (${realV}명)</span></div>
+              </div>
+            </div>`
+          : `<div class="login-prompt-inline" onclick="showLoginModal()">🔒 로그인하면 투표·댓글 참여 가능해요</div>`)
+        : (!currentUser ? `<div class="login-prompt-inline" onclick="showLoginModal()">🔒 로그인하면 댓글 참여 가능해요</div>` : '');
 
       cards.push({ post, votes, reactions, comments, voteHTML, reactionTypes });
     }
