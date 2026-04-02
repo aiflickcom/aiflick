@@ -356,6 +356,13 @@
       margin-top: 4px;
     }
 
+    .upload-type-btn {
+      background: var(--card2); border: 1px solid var(--border); color: var(--muted);
+      padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s;
+    }
+    .upload-type-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
     @media (max-width: 600px) {
       .form-row { grid-template-columns: 1fr; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -423,8 +430,16 @@
     <!-- 영상 업로드 -->
     <div class="upload-card">
       <div class="section-title">📤 영상 업로드</div>
+
+      <!-- 업로드 방식 선택 -->
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        <button class="upload-type-btn active" id="type-youtube" onclick="setUploadType('youtube')">🔗 YouTube URL</button>
+        <button class="upload-type-btn" id="type-file" onclick="setUploadType('file')">📁 파일 직접 업로드</button>
+      </div>
+
       <div class="form-row">
-        <div class="form-group form-group-full">
+        <!-- YouTube 방식 -->
+        <div class="form-group form-group-full" id="youtube-section">
           <label class="form-label">YouTube URL *</label>
           <input class="form-input" type="url" id="video-url"
             placeholder="https://www.youtube.com/watch?v=..."
@@ -433,6 +448,22 @@
             <img id="yt-thumb" src="" alt="썸네일 미리보기">
           </div>
         </div>
+
+        <!-- 파일 방식 -->
+        <div class="form-group form-group-full" id="file-section" style="display:none;">
+          <label class="form-label">영상 파일 * (최대 50MB, mp4/webm)</label>
+          <input class="form-input" type="file" id="video-file" accept="video/mp4,video/webm,video/quicktime"
+            onchange="previewFile(this)">
+          <div id="file-preview" style="margin-top:8px;font-size:13px;color:var(--muted);"></div>
+          <!-- 업로드 진행바 -->
+          <div id="progress-wrap" style="display:none;margin-top:10px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">업로드 중... <span id="progress-pct">0</span>%</div>
+            <div style="background:var(--border);border-radius:4px;height:6px;">
+              <div id="progress-bar" style="background:var(--accent);height:6px;border-radius:4px;width:0%;transition:width 0.3s;"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="form-group form-group-full">
           <label class="form-label">제목 *</label>
           <input class="form-input" type="text" id="video-title" placeholder="영상 제목을 입력하세요">
@@ -446,7 +477,7 @@
             <option value="lab">🧪 실험실</option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="thumb-section">
           <label class="form-label">썸네일 URL (선택)</label>
           <input class="form-input" type="url" id="video-thumb" placeholder="비워두면 YouTube 자동 적용">
         </div>
@@ -479,6 +510,29 @@
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let currentUser = null;
+  let uploadType = 'youtube';
+
+  function setUploadType(type) {
+    uploadType = type;
+    document.getElementById('type-youtube').classList.toggle('active', type === 'youtube');
+    document.getElementById('type-file').classList.toggle('active', type === 'file');
+    document.getElementById('youtube-section').style.display = type === 'youtube' ? 'block' : 'none';
+    document.getElementById('file-section').style.display = type === 'file' ? 'block' : 'none';
+    document.getElementById('thumb-section').style.display = type === 'youtube' ? 'block' : 'none';
+  }
+
+  function previewFile(input) {
+    const file = input.files[0];
+    const preview = document.getElementById('file-preview');
+    if (!file) { preview.textContent = ''; return; }
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    if (file.size > 50 * 1024 * 1024) {
+      preview.innerHTML = '<span style="color:var(--accent)">⚠️ 50MB를 초과했어요. 더 작은 파일을 사용해주세요.</span>';
+      input.value = '';
+      return;
+    }
+    preview.innerHTML = `✅ <strong>${file.name}</strong> (${sizeMB}MB)`;
+  }
 
   // YouTube ID 추출
   function getYouTubeId(url) {
@@ -583,10 +637,8 @@
 
   // 업로드
   async function uploadPost() {
-    const url = document.getElementById('video-url').value.trim();
     const title = document.getElementById('video-title').value.trim();
     const category = document.getElementById('video-category').value;
-    const thumb = document.getElementById('video-thumb').value.trim();
     const btn = document.getElementById('upload-btn');
     const successEl = document.getElementById('upload-success');
     const errorEl = document.getElementById('upload-error');
@@ -594,14 +646,8 @@
     successEl.style.display = 'none';
     errorEl.style.display = 'none';
 
-    if (!url || !title) {
-      errorEl.textContent = 'URL과 제목은 필수입니다.';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    if (!getYouTubeId(url)) {
-      errorEl.textContent = '올바른 YouTube URL을 입력해주세요.';
+    if (!title) {
+      errorEl.textContent = '제목은 필수입니다.';
       errorEl.style.display = 'block';
       return;
     }
@@ -609,33 +655,83 @@
     btn.disabled = true;
     btn.textContent = '업로드 중...';
 
-    const ytId = getYouTubeId(url);
-    const thumbnailUrl = thumb || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    try {
+      if (uploadType === 'youtube') {
+        // YouTube 방식
+        const url = document.getElementById('video-url').value.trim();
+        const thumb = document.getElementById('video-thumb').value.trim();
+        if (!url || !getYouTubeId(url)) {
+          errorEl.textContent = '올바른 YouTube URL을 입력해주세요.';
+          errorEl.style.display = 'block';
+          btn.disabled = false; btn.textContent = '업로드';
+          return;
+        }
+        const ytId = getYouTubeId(url);
+        const thumbnailUrl = thumb || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        const { error } = await sb.from('posts').insert({ title, video_url: url, video_type: 'youtube', thumbnail_url: thumbnailUrl, category });
+        if (error) throw error;
+        document.getElementById('video-url').value = '';
+        document.getElementById('video-thumb').value = '';
+        document.getElementById('yt-preview').style.display = 'none';
 
-    const { error } = await sb.from('posts').insert({
-      title,
-      video_url: url,
-      video_type: 'youtube',
-      thumbnail_url: thumbnailUrl,
-      category,
-    });
+      } else {
+        // 파일 직접 업로드 방식
+        const fileInput = document.getElementById('video-file');
+        const file = fileInput.files[0];
+        if (!file) {
+          errorEl.textContent = '파일을 선택해주세요.';
+          errorEl.style.display = 'block';
+          btn.disabled = false; btn.textContent = '업로드';
+          return;
+        }
+
+        // 진행바 표시
+        document.getElementById('progress-wrap').style.display = 'block';
+
+        const ext = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const filePath = `public/${fileName}`;
+
+        // Supabase Storage 업로드
+        const { error: uploadError } = await sb.storage.from('videos').upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          onUploadProgress: (progress) => {
+            const pct = Math.round(progress.loaded / progress.total * 100);
+            document.getElementById('progress-pct').textContent = pct;
+            document.getElementById('progress-bar').style.width = pct + '%';
+          }
+        });
+        if (uploadError) throw uploadError;
+
+        // 공개 URL 가져오기
+        const { data: { publicUrl } } = sb.storage.from('videos').getPublicUrl(filePath);
+
+        const { error: dbError } = await sb.from('posts').insert({
+          title, video_url: publicUrl, video_type: 'upload',
+          thumbnail_url: '', storage_path: filePath, category
+        });
+        if (dbError) throw dbError;
+
+        document.getElementById('progress-wrap').style.display = 'none';
+        document.getElementById('progress-bar').style.width = '0%';
+        fileInput.value = '';
+        document.getElementById('file-preview').textContent = '';
+      }
+
+      successEl.style.display = 'block';
+      document.getElementById('video-title').value = '';
+      loadPosts();
+      loadStats();
+
+    } catch (err) {
+      errorEl.textContent = '업로드 실패: ' + err.message;
+      errorEl.style.display = 'block';
+      document.getElementById('progress-wrap').style.display = 'none';
+    }
 
     btn.disabled = false;
     btn.textContent = '업로드';
-
-    if (error) {
-      errorEl.textContent = '업로드 실패: ' + error.message;
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    successEl.style.display = 'block';
-    document.getElementById('video-url').value = '';
-    document.getElementById('video-title').value = '';
-    document.getElementById('video-thumb').value = '';
-    document.getElementById('yt-preview').style.display = 'none';
-    loadPosts();
-    loadStats();
   }
 
   // 삭제

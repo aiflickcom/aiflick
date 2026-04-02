@@ -253,6 +253,7 @@
   }
   function getThumb(url) { const id = getYouTubeId(url); return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''; }
   function getEmbed(url) { const id = getYouTubeId(url); return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : ''; }
+  function isDirectVideo(url) { return url && (url.includes('supabase.co') || url.endsWith('.mp4') || url.endsWith('.webm')); }
   function catLabel(c) { return { hot:'🔥 핫', funny:'😂 웃긴', guess:'❓ 맞춰봐', lab:'🧪 실험실' }[c] || c; }
   function getVoterId() {
     let id = localStorage.getItem('aiflick_vid');
@@ -373,7 +374,9 @@
       div.className = 'short-item';
       div.innerHTML = `
         <div class="short-logo">AIFlick</div>
-        <iframe src="${getEmbed(post.video_url)}" allowfullscreen allow="autoplay; fullscreen"></iframe>
+        ${isDirectVideo(post.video_url)
+          ? `<video src="${post.video_url}" autoplay loop playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"></video>`
+          : `<iframe src="${getEmbed(post.video_url)}" allowfullscreen allow="autoplay; fullscreen"></iframe>`}
         <div class="short-right">
           <div class="short-action">
             <button class="short-action-btn" onclick="shortReact('${post.id}','like',this)">
@@ -487,7 +490,12 @@
   }
 
   function playFeedVideo(id, url) {
-    document.getElementById(`fthumb-${id}`).innerHTML = `<iframe src="${getEmbed(url)}" allowfullscreen allow="autoplay"></iframe>`;
+    const el = document.getElementById(`fthumb-${id}`);
+    if (isDirectVideo(url)) {
+      el.innerHTML = `<video src="${url}" autoplay controls style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"></video>`;
+    } else {
+      el.innerHTML = `<iframe src="${getEmbed(url)}" allowfullscreen allow="autoplay"></iframe>`;
+    }
   }
 
   async function feedVote(postId, type, btn) {
