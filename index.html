@@ -4,189 +4,643 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIFlick — AI 영상 놀이터</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Orbitron:wght@700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #0a0a0a; --card: #111111; --card2: #1a1a1a; --border: #222222;
-      --accent: #ff3c3c; --accent2: #ff8c00; --text: #f0f0f0; --muted: #666666; --radius: 14px;
+      --bg: #060608;
+      --surface: #0d0d12;
+      --card: #11111a;
+      --card2: #18181f;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --accent: #a855f7;
+      --accent2: #06b6d4;
+      --accent3: #f59e0b;
+      --glow: rgba(168,85,247,0.4);
+      --glow2: rgba(6,182,212,0.4);
+      --text: #f1f0ff;
+      --muted: #6b6b80;
+      --muted2: #9999aa;
+      --radius: 16px;
+      --radius-sm: 10px;
     }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-    /* HEADER */
-    header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: rgba(10,10,10,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
-    .header-top { padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
-    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; background: linear-gradient(90deg, #ff3c3c, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
-    .header-right { display: flex; align-items: center; gap: 8px; }
-    .view-btns { display: flex; background: var(--card2); border-radius: 8px; padding: 3px; gap: 2px; }
-    .view-btn { background: transparent; border: none; color: var(--muted); padding: 4px 10px; border-radius: 6px; font-size: 15px; cursor: pointer; transition: all 0.2s; }
-    .view-btn.active { background: var(--accent); color: white; }
-    .login-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-    .login-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .user-avatar { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--accent); cursor: pointer; object-fit: cover; }
-    .user-menu { position: fixed; top: 60px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; min-width: 160px; display: none; z-index: 300; }
+    /* 배경 그리드 텍스처 */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image:
+        linear-gradient(rgba(168,85,247,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168,85,247,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      background: rgba(6,6,8,0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-top {
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px; font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, #a855f7 0%, #06b6d4 50%, #a855f7 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+      animation: shimmer 3s linear infinite;
+    }
+    @keyframes shimmer { to { background-position: 200% center; } }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    /* 뷰 전환 버튼 */
+    .view-btns {
+      display: flex;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 4px; gap: 2px;
+    }
+    .view-btn {
+      background: transparent; border: none; color: var(--muted);
+      width: 34px; height: 28px; border-radius: 8px;
+      font-size: 16px; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .view-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+      box-shadow: 0 0 12px var(--glow);
+    }
+
+    /* 로그인/유저 */
+    .login-btn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--muted2); padding: 7px 14px;
+      border-radius: 20px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .login-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--accent); cursor: pointer;
+      object-fit: cover;
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    .user-menu {
+      position: fixed; top: 64px; right: 16px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 6px; min-width: 180px; display: none; z-index: 300;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px var(--border);
+    }
     .user-menu.show { display: block; }
-    .user-menu-item { padding: 8px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: background 0.2s; color: var(--text); }
+    .user-menu-item {
+      padding: 9px 14px; border-radius: 8px; font-size: 13px;
+      cursor: pointer; transition: background 0.15s; color: var(--text);
+    }
     .user-menu-item:hover { background: var(--card2); }
-    .user-menu-item.danger { color: var(--accent); }
-    .header-bottom { padding: 0 12px 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
-    .header-bottom::-webkit-scrollbar { display: none; }
-    .nav-btn { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
-    .nav-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .user-menu-item.danger { color: #f87171; }
 
-    /* SHORTS */
-    #shorts-wrap { position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; display: none; z-index: 50; }
+    /* 카테고리 탭 */
+    .header-bottom {
+      padding: 0 16px 10px;
+      display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+    }
+    .header-bottom::-webkit-scrollbar { display: none; }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted2);
+      padding: 5px 14px; border-radius: 20px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: all 0.2s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-btn.active {
+      background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(6,182,212,0.2));
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* ── SHORTS ── */
+    #shorts-wrap {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      overflow-y: scroll; scroll-snap-type: y mandatory;
+      scrollbar-width: none; display: none; z-index: 50;
+    }
     #shorts-wrap::-webkit-scrollbar { display: none; }
     #shorts-wrap.active { display: block; }
-    .short-item { height: 100dvh; width: 100%; scroll-snap-align: start; position: relative; background: #000; overflow: hidden; }
-    .short-item iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-    .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 70px 80px 16px; background: linear-gradient(transparent, rgba(0,0,0,0.88)); z-index: 10; }
-    .short-right { position: absolute; right: 12px; bottom: 160px; display: flex; flex-direction: column; gap: 18px; align-items: center; z-index: 10; }
-    .short-action { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .short-action-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
-    .short-action-btn:hover { background: rgba(255,255,255,0.25); }
-    .short-action-btn svg { width: 20px; height: 20px; fill: white; }
-    .short-action-count { font-size: 11px; color: rgba(255,255,255,0.8); }
-    .short-logo { position: absolute; top: 60px; left: 16px; z-index: 10; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; background: linear-gradient(90deg, #ff3c3c, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .short-category { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
-    .short-title { font-size: 15px; font-weight: 700; color: white; margin-bottom: 10px; line-height: 1.4; }
-    .short-vote { display: flex; gap: 8px; justify-content: flex-start; }
-    .short-vote-btn { background: rgba(255,255,255,0.12); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 8px 20px; text-align: center; font-size: 13px; font-weight: 700; color: white; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; white-space: nowrap; }
-    .short-vote-btn:hover { background: rgba(255,60,60,0.3); border-color: var(--accent); }
-    .short-vote-btn.voted-ai { background: rgba(0,200,255,0.3); border-color: #00c8ff; }
-    .short-vote-btn.voted-real { background: rgba(0,220,100,0.3); border-color: #00dc64; }
-    .short-vote-count { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 5px; }
-    .short-login-prompt { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.7); cursor: pointer; }
-    .short-login-prompt:hover { background: rgba(255,60,60,0.2); }
 
-    /* FEED */
-    #feed-wrap { display: none; padding-top: 100px; }
+    .short-item {
+      height: 100dvh; width: 100%;
+      scroll-snap-align: start;
+      position: relative; background: #000; overflow: hidden;
+    }
+    .short-item iframe {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; border: none;
+    }
+
+    /* 숏츠 상단 그라데이션 */
+    .short-item::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 120px;
+      background: linear-gradient(rgba(0,0,0,0.6), transparent);
+      z-index: 9; pointer-events: none;
+    }
+
+    .short-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 16px 72px 80px 16px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.9));
+      z-index: 10;
+    }
+
+    .short-right {
+      position: absolute; right: 14px; bottom: 160px;
+      display: flex; flex-direction: column; gap: 20px;
+      align-items: center; z-index: 10;
+    }
+
+    .short-action { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+    .short-action-btn {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .short-action-btn:hover {
+      background: rgba(168,85,247,0.3);
+      border-color: var(--accent);
+      box-shadow: 0 0 14px var(--glow);
+      transform: scale(1.08);
+    }
+    .short-action-btn svg { width: 20px; height: 20px; fill: white; }
+    .short-action-btn.liked svg { fill: #f472b6; }
+
+    .short-action-count {
+      font-size: 11px; font-weight: 700;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .short-logo {
+      position: absolute; top: 16px; left: 16px; z-index: 11;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 18px; font-weight: 900; letter-spacing: 3px;
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .short-category {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+      display: inline-block; margin-bottom: 7px;
+      backdrop-filter: blur(8px);
+      letter-spacing: 0.5px;
+    }
+
+    .short-title {
+      font-size: 15px; font-weight: 700;
+      color: white; margin-bottom: 12px;
+      line-height: 1.4;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.8);
+    }
+
+    .short-vote { display: flex; gap: 8px; }
+
+    .short-vote-btn {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px; padding: 9px 18px;
+      text-align: center; font-size: 13px; font-weight: 700;
+      color: white; cursor: pointer;
+      font-family: inherit; transition: all 0.25s;
+      white-space: nowrap;
+    }
+    .short-vote-btn:hover {
+      background: rgba(168,85,247,0.3);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--glow);
+      transform: translateY(-1px);
+    }
+    .short-vote-btn.voted-ai {
+      background: rgba(6,182,212,0.3);
+      border-color: var(--accent2);
+      box-shadow: 0 0 12px var(--glow2);
+    }
+    .short-vote-btn.voted-real {
+      background: rgba(168,85,247,0.3);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--glow);
+    }
+
+    .short-vote-count {
+      font-size: 11px; color: rgba(255,255,255,0.45);
+      margin-bottom: 6px; font-weight: 600;
+    }
+
+    .short-login-prompt {
+      background: rgba(168,85,247,0.1);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 10px; padding: 10px 16px;
+      text-align: center; font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer; transition: all 0.2s;
+      font-weight: 600;
+    }
+    .short-login-prompt:hover {
+      background: rgba(168,85,247,0.25);
+      border-color: var(--accent);
+    }
+
+    /* ── FEED ── */
+    #feed-wrap { display: none; padding-top: 106px; }
     #feed-wrap.active { display: block; }
-    .feed-container { max-width: 680px; margin: 0 auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
-    .video-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: transform 0.2s, border-color 0.2s; }
-    .video-card:hover { border-color: #333; transform: translateY(-2px); }
+
+    .feed-container {
+      max-width: 680px; margin: 0 auto;
+      padding: 16px; display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .video-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .video-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(168,85,247,0.05), transparent);
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+    .video-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(168,85,247,0.1); }
+    .video-card:hover::before { opacity: 1; }
+
     .video-wrapper { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
     .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
     .thumbnail-wrap { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; }
     .thumbnail { width: 100%; height: 100%; object-fit: cover; }
-    .play-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 54px; height: 54px; background: rgba(255,60,60,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .thumbnail-wrap:hover .play-overlay { transform: translate(-50%,-50%) scale(1.1); }
-    .play-overlay svg { width: 22px; height: 22px; fill: white; margin-left: 3px; }
-    .card-body { padding: 14px; }
-    .card-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .category-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
-    .category-badge.hot { background: rgba(255,60,60,0.15); color: #ff3c3c; }
-    .category-badge.funny { background: rgba(255,200,0,0.15); color: #ffc800; }
-    .category-badge.guess { background: rgba(0,200,255,0.15); color: #00c8ff; }
-    .category-badge.lab { background: rgba(150,100,255,0.15); color: #9664ff; }
-    .card-title { font-size: 15px; font-weight: 700; line-height: 1.4; margin-bottom: 12px; }
-    .vote-section { margin-bottom: 12px; }
-    .vote-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .vote-participants { font-size: 12px; color: var(--muted); margin: 4px 0; }
-    .vote-buttons { display: flex; gap: 8px; }
-    .vote-btn { flex: 1; padding: 9px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--card2); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
-    .vote-btn:hover { transform: scale(1.02); }
-    .vote-btn.ai-btn:hover, .vote-btn.ai-btn.voted { background: rgba(0,200,255,0.15); border-color: #00c8ff; color: #00c8ff; }
-    .vote-btn.real-btn:hover, .vote-btn.real-btn.voted { background: rgba(0,220,100,0.15); border-color: #00dc64; color: #00dc64; }
-    .vote-result { display: none; margin-top: 8px; }
-    .vote-result.show { display: block; }
-    .vote-bar-wrap { display: flex; border-radius: 6px; overflow: hidden; height: 7px; background: var(--border); margin-bottom: 5px; }
-    .vote-bar-ai { background: #00c8ff; transition: width 0.4s ease; }
-    .vote-bar-real { background: #00dc64; transition: width 0.4s ease; }
-    .vote-counts { display: flex; justify-content: space-between; font-size: 12px; }
-    .vote-count-ai { color: #00c8ff; }
-    .vote-count-real { color: #00dc64; }
-    .login-prompt-inline { background: var(--card2); border: 1px dashed var(--border); border-radius: 10px; padding: 10px; text-align: center; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; margin-bottom: 12px; }
-    .login-prompt-inline:hover { border-color: var(--accent); color: var(--accent); }
-    .reaction-bar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-    .reaction-btn { background: var(--card2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 10px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--muted); transition: all 0.2s; font-family: 'Noto Sans KR', sans-serif; }
-    .reaction-btn:hover { border-color: var(--accent2); color: var(--text); transform: scale(1.05); }
-    .comment-section { border-top: 1px solid var(--border); padding-top: 10px; }
-    .comment-preview { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-    .comment-item { font-size: 13px; color: var(--muted); line-height: 1.4; }
-    .comment-item .nickname { color: var(--text); font-weight: 600; margin-right: 5px; }
-    .comment-input-wrap { display: flex; gap: 8px; }
-    .comment-input { flex: 1; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; transition: border-color 0.2s; }
-    .comment-input:focus { border-color: var(--accent); }
-    .comment-input::placeholder { color: var(--muted); }
-    .comment-submit { background: var(--accent); border: none; border-radius: 8px; padding: 8px 14px; color: white; font-size: 13px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; font-weight: 700; }
 
-    /* BOARD */
-    #board-wrap { display: none; padding-top: 100px; }
+    .play-overlay {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 58px; height: 58px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s;
+      box-shadow: 0 0 20px var(--glow);
+    }
+    .thumbnail-wrap:hover .play-overlay { transform: translate(-50%,-50%) scale(1.12); box-shadow: 0 0 32px var(--glow); }
+    .play-overlay svg { width: 22px; height: 22px; fill: white; margin-left: 3px; }
+
+    .card-body { padding: 16px; }
+
+    .card-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+
+    .category-badge {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .category-badge.hot { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
+    .category-badge.funny { background: rgba(234,179,8,0.15); color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
+    .category-badge.guess { background: rgba(6,182,212,0.15); color: #22d3ee; border: 1px solid rgba(6,182,212,0.3); }
+    .category-badge.lab { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+
+    .card-title {
+      font-size: 15px; font-weight: 700;
+      line-height: 1.5; margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    /* 투표 */
+    .vote-section { margin-bottom: 14px; }
+    .vote-label { font-size: 12px; color: var(--muted2); margin-bottom: 8px; font-weight: 600; }
+    .vote-participants { font-size: 12px; color: var(--muted); margin: 6px 0; }
+
+    .vote-buttons { display: flex; gap: 8px; }
+    .vote-btn {
+      flex: 1; padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border2);
+      background: var(--card2);
+      color: var(--muted2); font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.2s; text-align: center;
+    }
+    .vote-btn:hover { transform: translateY(-1px); }
+    .vote-btn.ai-btn:hover, .vote-btn.ai-btn.voted {
+      background: rgba(6,182,212,0.15);
+      border-color: var(--accent2); color: #22d3ee;
+      box-shadow: 0 0 12px var(--glow2);
+    }
+    .vote-btn.real-btn:hover, .vote-btn.real-btn.voted {
+      background: rgba(168,85,247,0.15);
+      border-color: var(--accent); color: #c084fc;
+      box-shadow: 0 0 12px var(--glow);
+    }
+
+    .vote-result { display: none; margin-top: 10px; }
+    .vote-result.show { display: block; }
+    .vote-bar-wrap {
+      display: flex; border-radius: 4px; overflow: hidden;
+      height: 6px; background: var(--card2); margin-bottom: 6px;
+    }
+    .vote-bar-ai { background: linear-gradient(90deg, var(--accent2), #0891b2); transition: width 0.5s ease; }
+    .vote-bar-real { background: linear-gradient(90deg, var(--accent), #7c3aed); transition: width 0.5s ease; }
+    .vote-counts { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; }
+    .vote-count-ai { color: #22d3ee; }
+    .vote-count-real { color: #c084fc; }
+
+    .login-prompt-inline {
+      background: rgba(168,85,247,0.06);
+      border: 1px dashed rgba(168,85,247,0.3);
+      border-radius: var(--radius-sm); padding: 11px;
+      text-align: center; font-size: 13px; font-weight: 600;
+      color: var(--muted2); cursor: pointer; transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+    .login-prompt-inline:hover { border-color: var(--accent); color: var(--accent); background: rgba(168,85,247,0.1); }
+
+    /* 리액션 */
+    .reaction-bar { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .reaction-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 5px 12px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 5px;
+      color: var(--muted2); transition: all 0.2s;
+      font-family: inherit;
+    }
+    .reaction-btn:hover {
+      border-color: var(--accent3); color: var(--text);
+      background: rgba(245,158,11,0.1);
+      transform: scale(1.06);
+    }
+    .reaction-btn.reacted { border-color: var(--accent3); color: var(--accent3); }
+
+    /* 댓글 */
+    .comment-section { border-top: 1px solid var(--border); padding-top: 12px; }
+    .comment-preview { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+    .comment-item { font-size: 13px; color: var(--muted2); line-height: 1.5; }
+    .comment-item .nickname { color: var(--text); font-weight: 700; margin-right: 6px; }
+    .comment-input-wrap { display: flex; gap: 8px; }
+
+    .comment-input {
+      flex: 1;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 14px; font-size: 13px;
+      color: var(--text); font-family: inherit;
+      outline: none; transition: all 0.2s;
+    }
+    .comment-input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(168,85,247,0.2); }
+    .comment-input::placeholder { color: var(--muted); }
+
+    .comment-submit {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; border-radius: var(--radius-sm);
+      padding: 9px 16px; color: white;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: all 0.2s;
+    }
+    .comment-submit:hover { opacity: 0.85; transform: scale(1.02); }
+
+    /* ── BOARD ── */
+    #board-wrap { display: none; padding-top: 106px; }
     #board-wrap.active { display: block; }
+
     .board-container { max-width: 900px; margin: 0 auto; padding: 16px; }
-    .board-table { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .board-header { display: grid; grid-template-columns: 1fr 100px 80px 60px; padding: 10px 16px; background: var(--card2); font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-    .board-row { display: grid; grid-template-columns: 1fr 100px 80px 60px; padding: 12px 16px; border-top: 1px solid var(--border); align-items: center; cursor: pointer; transition: background 0.15s; }
+
+    .board-table {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+
+    .board-header {
+      display: grid; grid-template-columns: 1fr 110px 90px 60px;
+      padding: 11px 18px;
+      background: var(--card2);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px; color: var(--muted);
+      font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    .board-row {
+      display: grid; grid-template-columns: 1fr 110px 90px 60px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      align-items: center; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .board-row:last-child { border-bottom: none; }
     .board-row:hover { background: var(--card2); }
-    .board-title-cell { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .board-row:hover .board-title-cell { color: #c084fc; }
+
+    .board-title-cell {
+      font-size: 14px; font-weight: 600;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      transition: color 0.15s;
+    }
     .board-date { font-size: 12px; color: var(--muted); }
     .board-views { font-size: 12px; color: var(--muted); text-align: right; }
     .board-empty { padding: 60px; text-align: center; color: var(--muted); font-size: 14px; }
 
-    /* 모달 */
-    .post-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
-    .post-modal.show { display: flex; }
-    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
-    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .modal-title { font-size: 16px; font-weight: 700; }
-    .modal-close { background: transparent; border: none; color: var(--muted); font-size: 24px; cursor: pointer; }
-    .modal-body { padding: 20px; }
-    .modal-video { width: 100%; padding-bottom: 56.25%; position: relative; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+    /* 모달들 */
+    .post-modal, .login-modal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      z-index: 500; display: none;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .post-modal.show, .login-modal.show { display: flex; }
+
+    .modal-content {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(168,85,247,0.1);
+    }
+
+    .modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--card2);
+    }
+    .modal-title { font-size: 15px; font-weight: 700; }
+    .modal-close {
+      background: transparent; border: none; color: var(--muted);
+      font-size: 24px; cursor: pointer; line-height: 1;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 22px; }
+    .modal-video { width: 100%; padding-bottom: 56.25%; position: relative; background: #000; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 16px; }
     .modal-video iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
     /* 로그인 모달 */
-    .login-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 600; display: none; align-items: center; justify-content: center; }
-    .login-modal.show { display: flex; }
-    .login-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; width: 100%; max-width: 360px; text-align: center; }
-    .login-logo-big { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 3px; background: linear-gradient(90deg, #ff3c3c, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
-    .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
-    .google-login-btn { width: 100%; background: white; border: none; border-radius: 10px; padding: 12px 20px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; color: #333; transition: opacity 0.2s; font-family: 'Noto Sans KR', sans-serif; }
-    .google-login-btn:hover { opacity: 0.9; }
-    .login-close-btn { margin-top: 14px; background: transparent; border: none; color: var(--muted); font-size: 13px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+    .login-modal { z-index: 600; }
+    .login-box {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 44px 36px; width: 100%; max-width: 380px; text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 40px rgba(168,85,247,0.15);
+      position: relative; overflow: hidden;
+    }
+    .login-box::before {
+      content: '';
+      position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(ellipse at center, rgba(168,85,247,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .login-logo-big {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 32px; font-weight: 900; letter-spacing: 4px;
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .login-box p { color: var(--muted2); font-size: 14px; margin-bottom: 30px; line-height: 1.7; }
+
+    .google-login-btn {
+      width: 100%; background: white; border: none; border-radius: 12px;
+      padding: 13px 20px; font-size: 15px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      color: #1a1a1a; transition: all 0.2s; font-family: inherit;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .google-login-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+
+    .login-close-btn {
+      margin-top: 16px; background: transparent; border: none;
+      color: var(--muted); font-size: 13px; cursor: pointer;
+      font-family: inherit; transition: color 0.2s;
+    }
     .login-close-btn:hover { color: var(--text); }
 
-    .upload-type-btn { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
-    .upload-type-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    /* 업로드 모달 */
+    .upload-type-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--muted2); padding: 7px 14px;
+      border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .upload-type-btn.active {
+      background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(6,182,212,0.2));
+      border-color: var(--accent); color: var(--text);
+    }
+
     /* 커스텀 비디오 컨트롤 */
     .video-controls {
       position: absolute; bottom: 0; left: 0; right: 0; z-index: 15;
-      padding: 6px 12px 8px;
-      background: rgba(0,0,0,0.5);
+      padding: 6px 12px 10px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
       display: none;
     }
     .video-controls.show { display: block; }
     .video-progress-wrap {
-      width: 100%; height: 3px; background: rgba(255,255,255,0.3);
+      width: 100%; height: 3px;
+      background: rgba(255,255,255,0.2);
       border-radius: 2px; cursor: pointer; margin-bottom: 6px;
     }
     .video-progress-bar {
-      height: 100%; background: var(--accent); border-radius: 2px;
-      width: 0%; transition: width 0.1s linear;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px; width: 0%; transition: width 0.1s linear;
     }
-    .video-ctrl-row {
-      display: flex; align-items: center; gap: 10px;
-    }
+    .video-ctrl-row { display: flex; align-items: center; gap: 8px; }
     .video-ctrl-btn {
       background: transparent; border: none; cursor: pointer;
-      padding: 4px; display: flex; align-items: center;
+      padding: 3px; display: flex; align-items: center;
     }
     .video-ctrl-btn svg { width: 18px; height: 18px; fill: white; }
-    .video-time {
-      font-size: 11px; color: rgba(255,255,255,0.85);
-      font-family: monospace;
-    }
+    .video-time { font-size: 11px; color: rgba(255,255,255,0.8); font-family: monospace; }
     .video-tap-area {
-      position: absolute; top: 0; left: 0; right: 70px; bottom: 0; z-index: 12; cursor: pointer;
+      position: absolute; top: 0; left: 0; right: 70px; bottom: 0;
+      z-index: 12; cursor: pointer;
     }
+
+    /* 스크롤바 */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    /* 로딩 */
     .loading { text-align: center; padding: 60px; color: var(--muted); }
-    .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* 하트 애니메이션 */
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+    .heart-pop { animation: heartPop 0.3s ease; }
+
     @media (max-width: 480px) {
-      .board-header, .board-row { grid-template-columns: 1fr 80px 60px; }
+      .board-header, .board-row { grid-template-columns: 1fr 90px 60px; }
       .board-views { display: none; }
+      .header-top { padding: 0 12px; }
     }
   </style>
 </head>
@@ -194,7 +648,7 @@
 
 <header>
   <div class="header-top">
-    <a href="index.html" class="logo">AIFlick</a>
+    <a href="index.html" class="logo">AIFLICK</a>
     <div class="header-right">
       <div class="view-btns">
         <button class="view-btn active" id="btn-shorts" onclick="setView('shorts')" title="숏츠">▶</button>
@@ -216,13 +670,15 @@
 </header>
 
 <div class="user-menu" id="user-menu">
-  <div class="user-menu-item" id="user-name-display" style="color:var(--muted);font-size:12px;"></div>
+  <div class="user-menu-item" id="user-name-display" style="color:var(--muted);font-size:12px;pointer-events:none;"></div>
   <div class="user-menu-item danger" onclick="doLogout()">로그아웃</div>
 </div>
 
 <!-- 숏츠 -->
 <div id="shorts-wrap" class="active">
-  <div class="loading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><div class="spinner"></div></div>
+  <div style="height:100dvh;display:flex;align-items:center;justify-content:center;">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
 </div>
 
 <!-- 피드 -->
@@ -257,44 +713,39 @@
 
 <!-- 업로드 모달 -->
 <div class="login-modal" id="upload-modal" onclick="if(event.target===this)closeUploadModal()">
-  <div class="login-box" style="max-width:440px;text-align:left;">
+  <div class="login-box" style="max-width:460px;text-align:left;padding:28px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <div class="login-logo-big" style="font-size:24px;">영상 올리기</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;background:linear-gradient(135deg,#a855f7,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">영상 올리기</div>
       <button onclick="closeUploadModal()" style="background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;">×</button>
     </div>
-
-    <!-- 업로드 방식 탭 -->
     <div style="display:flex;gap:6px;margin-bottom:16px;">
       <button class="upload-type-btn active" id="u-type-youtube" onclick="setUserUploadType('youtube')" style="flex:1;">🔗 YouTube URL</button>
       <button class="upload-type-btn" id="u-type-file" onclick="setUserUploadType('file')" style="flex:1;">📁 파일 업로드</button>
     </div>
-
     <div id="u-youtube-section">
       <div style="margin-bottom:12px;">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">YouTube URL *</label>
+        <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">YouTube URL *</label>
         <input class="comment-input" type="url" id="u-video-url" placeholder="https://www.youtube.com/watch?v=..." style="width:100%;" oninput="previewUserYoutube(this.value)">
-        <div id="u-yt-preview" style="display:none;margin-top:8px;"><img id="u-yt-thumb" src="" style="width:100%;max-width:280px;border-radius:6px;border:1px solid var(--border);"></div>
+        <div id="u-yt-preview" style="display:none;margin-top:8px;"><img id="u-yt-thumb" src="" style="width:100%;max-width:280px;border-radius:8px;border:1px solid var(--border);"></div>
       </div>
     </div>
-
     <div id="u-file-section" style="display:none;">
       <div style="margin-bottom:12px;">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">영상 파일 * (최대 50MB)</label>
+        <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">영상 파일 * (최대 50MB)</label>
         <input class="comment-input" type="file" id="u-video-file" accept="video/mp4,video/webm,video/quicktime" style="width:100%;" onchange="previewUserFile(this)">
         <div id="u-file-preview" style="font-size:12px;color:var(--muted);margin-top:5px;"></div>
         <div id="u-progress-wrap" style="display:none;margin-top:8px;">
-          <div style="font-size:12px;color:var(--muted);margin-bottom:3px;">업로드 중... <span id="u-progress-pct">0</span>%</div>
-          <div style="background:var(--border);border-radius:4px;height:5px;"><div id="u-progress-bar" style="background:var(--accent);height:5px;border-radius:4px;width:0%;transition:width 0.3s;"></div></div>
+          <div style="font-size:12px;color:var(--muted2);margin-bottom:4px;font-weight:600;">업로드 중... <span id="u-progress-pct">0</span>%</div>
+          <div style="background:var(--card2);border-radius:4px;height:5px;border:1px solid var(--border);"><div id="u-progress-bar" style="background:linear-gradient(90deg,var(--accent),var(--accent2));height:5px;border-radius:4px;width:0%;transition:width 0.3s;"></div></div>
         </div>
       </div>
     </div>
-
     <div style="margin-bottom:12px;">
-      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">제목 *</label>
+      <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">제목 *</label>
       <input class="comment-input" type="text" id="u-video-title" placeholder="영상 제목을 입력하세요" style="width:100%;">
     </div>
     <div style="margin-bottom:20px;">
-      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">카테고리</label>
+      <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">카테고리</label>
       <select class="comment-input" id="u-video-category" style="width:100%;cursor:pointer;">
         <option value="hot">🔥 핫</option>
         <option value="funny">😂 웃긴</option>
@@ -302,17 +753,16 @@
         <option value="lab">🧪 실험실</option>
       </select>
     </div>
-
-    <button class="comment-submit" id="u-upload-btn" onclick="submitUserUpload()" style="width:100%;padding:12px;font-size:14px;border-radius:10px;">업로드</button>
-    <div id="u-upload-error" style="display:none;margin-top:10px;font-size:13px;color:var(--accent);"></div>
-    <div id="u-upload-success" style="display:none;margin-top:10px;font-size:13px;color:#00dc64;">✅ 업로드 완료! 잠시 후 피드에 표시돼요.</div>
+    <button class="comment-submit" id="u-upload-btn" onclick="submitUserUpload()" style="width:100%;padding:13px;font-size:14px;border-radius:12px;">업로드</button>
+    <div id="u-upload-error" style="display:none;margin-top:10px;font-size:13px;color:#f87171;"></div>
+    <div id="u-upload-success" style="display:none;margin-top:10px;font-size:13px;color:#34d399;font-weight:600;">✅ 업로드 완료! 잠시 후 피드에 표시돼요.</div>
   </div>
 </div>
 
 <!-- 로그인 모달 -->
 <div class="login-modal" id="login-modal" onclick="if(event.target===this)closeLoginModal()">
   <div class="login-box">
-    <div class="login-logo-big">AIFlick</div>
+    <div class="login-logo-big">AIFLICK</div>
     <p>AI 영상 놀이터에 오신 걸 환영해요!<br>구글로 로그인하면 투표·댓글 참여 가능해요</p>
     <button class="google-login-btn" onclick="loginWithGoogle()">
       <svg width="20" height="20" viewBox="0 0 24 24">
@@ -340,7 +790,7 @@
   }
   function getThumb(url) { const id = getYouTubeId(url); return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''; }
   function getEmbed(url) { const id = getYouTubeId(url); return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : ''; }
-  function isDirectVideo(url) { return url && (url.includes('supabase.co') || url.endsWith('.mp4') || url.endsWith('.webm')); }
+  function isDirectVideo(url) { return url && (url.includes('supabase.co/storage') || url.endsWith('.mp4') || url.endsWith('.webm')); }
   function catLabel(c) { return { hot:'🔥 핫', funny:'😂 웃긴', guess:'❓ 맞춰봐', lab:'🧪 실험실' }[c] || c; }
   function getVoterId() {
     let id = localStorage.getItem('aiflick_vid');
@@ -365,20 +815,14 @@
       const avatar = currentUser.user_metadata?.avatar_url;
       const name = currentUser.user_metadata?.full_name || currentUser.email;
       document.getElementById('user-name-display').textContent = name;
-
-      // admin 여부 확인
       const { data: profile } = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).single();
       const isAdmin = profile?.is_admin;
-
-      area.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px;">
-          ${isAdmin
-            ? `<a href="admin.html" style="background:var(--accent);border:none;color:white;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;text-decoration:none;font-family:'Noto Sans KR',sans-serif;">관리자</a>`
-            : `<button class="login-btn" style="border-color:var(--accent);color:var(--accent);" onclick="showUploadModal()">+ 올리기</button>`}
-          ${avatar
-            ? `<img class="user-avatar" src="${avatar}" onclick="toggleUserMenu()">`
-            : `<button class="login-btn" onclick="toggleUserMenu()">${name.slice(0,6)}</button>`}
-        </div>`;
+      area.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
+        ${isAdmin
+          ? `<a href="admin.html" style="background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;text-decoration:none;font-family:inherit;box-shadow:0 0 12px var(--glow);">관리자</a>`
+          : `<button class="login-btn" style="border-color:var(--accent);color:var(--accent);" onclick="showUploadModal()">+ 올리기</button>`}
+        ${avatar ? `<img class="user-avatar" src="${avatar}" onclick="toggleUserMenu()">` : `<button class="login-btn" onclick="toggleUserMenu()">${name.slice(0,4)}</button>`}
+      </div>`;
     } else {
       area.innerHTML = `<button class="login-btn" onclick="showLoginModal()">로그인</button>`;
     }
@@ -386,7 +830,7 @@
 
   function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('show'); }
   document.addEventListener('click', e => {
-    if (!e.target.closest('#user-menu') && !e.target.closest('.user-avatar') && !e.target.closest('.login-btn'))
+    if (!e.target.closest('#user-menu') && !e.target.closest('.user-avatar') && !e.target.closest('[onclick="toggleUserMenu()"]'))
       document.getElementById('user-menu').classList.remove('show');
   });
 
@@ -424,10 +868,7 @@
     const preview = document.getElementById('u-file-preview');
     if (!file) { preview.textContent = ''; return; }
     const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-    if (file.size > 50 * 1024 * 1024) {
-      preview.innerHTML = '<span style="color:var(--accent)">⚠️ 50MB 초과예요. 더 작은 파일을 선택해주세요.</span>';
-      input.value = ''; return;
-    }
+    if (file.size > 50 * 1024 * 1024) { preview.innerHTML = '<span style="color:#f87171">⚠️ 50MB 초과예요.</span>'; input.value = ''; return; }
     preview.textContent = `✅ ${file.name} (${sizeMB}MB)`;
   }
 
@@ -439,18 +880,14 @@
     const errorEl = document.getElementById('u-upload-error');
     const successEl = document.getElementById('u-upload-success');
     errorEl.style.display = 'none'; successEl.style.display = 'none';
-
     if (!title) { errorEl.textContent = '제목을 입력해주세요.'; errorEl.style.display = 'block'; return; }
-
     btn.disabled = true; btn.textContent = '업로드 중...';
-
     try {
       if (userUploadType === 'youtube') {
         const url = document.getElementById('u-video-url').value.trim();
         if (!url || !getYouTubeId(url)) { errorEl.textContent = '올바른 YouTube URL을 입력해주세요.'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = '업로드'; return; }
         const ytId = getYouTubeId(url);
-        const thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-        const { error } = await sb.from('posts').insert({ title, video_url: url, video_type: 'youtube', thumbnail_url: thumbnailUrl, category });
+        const { error } = await sb.from('posts').insert({ title, video_url: url, video_type: 'youtube', thumbnail_url: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`, category });
         if (error) throw error;
         document.getElementById('u-video-url').value = '';
         document.getElementById('u-yt-preview').style.display = 'none';
@@ -461,14 +898,7 @@
         document.getElementById('u-progress-wrap').style.display = 'block';
         const ext = file.name.split('.').pop();
         const filePath = `public/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: upErr } = await sb.storage.from('videos').upload(filePath, file, {
-          cacheControl: '3600', upsert: false,
-          onUploadProgress: (p) => {
-            const pct = Math.round(p.loaded / p.total * 100);
-            document.getElementById('u-progress-pct').textContent = pct;
-            document.getElementById('u-progress-bar').style.width = pct + '%';
-          }
-        });
+        const { error: upErr } = await sb.storage.from('videos').upload(filePath, file, { cacheControl: '3600', upsert: false });
         if (upErr) throw upErr;
         const { data: { publicUrl } } = sb.storage.from('videos').getPublicUrl(filePath);
         const { error: dbErr } = await sb.from('posts').insert({ title, video_url: publicUrl, video_type: 'upload', thumbnail_url: '', storage_path: filePath, category });
@@ -476,14 +906,12 @@
         document.getElementById('u-progress-wrap').style.display = 'none';
         fileInput.value = ''; document.getElementById('u-file-preview').textContent = '';
       }
-
       document.getElementById('u-video-title').value = '';
       successEl.style.display = 'block';
       await loadAll();
       setTimeout(() => closeUploadModal(), 2000);
     } catch (err) {
-      errorEl.textContent = '업로드 실패: ' + err.message;
-      errorEl.style.display = 'block';
+      errorEl.textContent = '업로드 실패: ' + err.message; errorEl.style.display = 'block';
       document.getElementById('u-progress-wrap').style.display = 'none';
     }
     btn.disabled = false; btn.textContent = '업로드';
@@ -492,14 +920,13 @@
   // 뷰 전환
   function setView(v) {
     currentView = v;
-    ['shorts','feed','board'].forEach(name => {
-      document.getElementById(name + '-wrap').classList.toggle('active', v === name);
-      document.getElementById('btn-' + name).classList.toggle('active', v === name);
+    ['shorts','feed','board'].forEach(n => {
+      document.getElementById(n+'-wrap').classList.toggle('active', v===n);
+      document.getElementById('btn-'+n).classList.toggle('active', v===n);
     });
     renderCurrentView();
   }
 
-  // 카테고리
   function filterCat(cat, btn) {
     currentCat = cat;
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -508,7 +935,6 @@
   }
 
   function filteredPosts() { return currentCat === 'all' ? allPosts : allPosts.filter(p => p.category === currentCat); }
-
   function renderCurrentView() {
     if (currentView === 'shorts') renderShorts();
     else if (currentView === 'feed') renderFeed();
@@ -526,10 +952,10 @@
     const wrap = document.getElementById('shorts-wrap');
     const posts = filteredPosts();
     if (!posts.length) {
-      wrap.innerHTML = `<div class="short-item" style="display:flex;align-items:center;justify-content:center;"><div style="text-align:center;color:#666"><div style="font-size:48px;margin-bottom:16px">🎬</div><p>영상이 없어요</p></div></div>`;
+      wrap.innerHTML = `<div style="height:100dvh;display:flex;align-items:center;justify-content:center;"><div style="text-align:center;color:var(--muted)"><div style="font-size:48px;margin-bottom:16px">🎬</div><p>영상이 없어요</p></div></div>`;
       return;
     }
-    wrap.innerHTML = '<div class="loading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><div class="spinner"></div></div>';
+    wrap.innerHTML = `<div style="height:100dvh;display:flex;align-items:center;justify-content:center;"><div class="loading"><div class="spinner"></div></div></div>`;
     const items = [];
     for (const post of posts) {
       const [{ data: votes }, { data: reactions }, { data: comments }] = await Promise.all([
@@ -537,44 +963,44 @@
         sb.from('reactions').select('*').eq('post_id', post.id),
         sb.from('comments').select('id').eq('post_id', post.id),
       ]);
-      const aiV = (votes||[]).filter(v => v.vote_type === 'ai').length;
-      const realV = (votes||[]).filter(v => v.vote_type === 'real').length;
+      const aiV = (votes||[]).filter(v => v.vote_type==='ai').length;
+      const realV = (votes||[]).filter(v => v.vote_type==='real').length;
       const total = aiV + realV;
-      const voterId = getVoterId();
-      const myVote = (votes||[]).find(v => v.voter_id === voterId);
-      const likeCount = (reactions||[]).filter(r => r.type === 'like').length;
+      const myVote = (votes||[]).find(v => v.voter_id===getVoterId());
+      const likeCount = (reactions||[]).filter(r => r.type==='like').length;
       const cmtCount = (comments||[]).length;
 
-      const voteBtn1 = post.category === 'guess' ? '🤖 AI 같다' : '🤔 맞출 수 있다';
-      const voteBtn2 = post.category === 'guess' ? '👤 진짜 같다' : '😵 모르겠다';
+      const voteBtn1 = post.category==='guess' ? '🤖 AI 같다' : '🤔 맞출 수 있다';
+      const voteBtn2 = post.category==='guess' ? '👤 진짜 같다' : '😵 모르겠다';
+      const showVote = post.category==='guess' || post.category==='lab';
 
-      const voteSection = (post.category === 'guess' || post.category === 'lab')
+      const voteSection = showVote
         ? (currentUser
-          ? `<div style="margin-bottom:6px;font-size:11px;color:rgba(255,255,255,0.5);">${total > 0 ? `👥 ${total}명 투표` : '첫 번째로 투표해보세요!'}</div>
-            <div class="short-vote">
-              <button class="short-vote-btn ${myVote?.vote_type==='ai'?'voted-ai':''}" onclick="shortVote('${post.id}','ai',this)">${voteBtn1}</button>
-              <button class="short-vote-btn ${myVote?.vote_type==='real'?'voted-real':''}" onclick="shortVote('${post.id}','real',this)">${voteBtn2}</button>
-            </div>`
+          ? `<div class="short-vote-count">${total>0?`👥 ${total}명 투표`:'첫 번째로 투표해보세요!'}</div>
+             <div class="short-vote">
+               <button class="short-vote-btn ${myVote?.vote_type==='ai'?'voted-ai':''}" onclick="shortVote('${post.id}','ai',this)">${voteBtn1}</button>
+               <button class="short-vote-btn ${myVote?.vote_type==='real'?'voted-real':''}" onclick="shortVote('${post.id}','real',this)">${voteBtn2}</button>
+             </div>`
           : `<div class="short-login-prompt" onclick="showLoginModal()">👆 로그인하면 투표할 수 있어요</div>`)
         : '';
 
       items.push({ post, likeCount, cmtCount, voteSection });
     }
+
     wrap.innerHTML = '';
     items.forEach(({ post, likeCount, cmtCount, voteSection }) => {
       const div = document.createElement('div');
       div.className = 'short-item';
       div.dataset.videoUrl = post.video_url;
       div.dataset.postId = post.id;
-      div.dataset.videoUrl = post.video_url;
       div.innerHTML = `
-        <div class="short-logo">AIFlick</div>
-        <div class="short-video-placeholder" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;">
-          <div style="width:40px;height:40px;border:2px solid #333;border-top-color:#ff3c3c;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        <div class="short-logo">AIFLICK</div>
+        <div class="short-video-placeholder" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;z-index:1;">
+          <div class="spinner"></div>
         </div>
         <div class="short-right">
           <div class="short-action">
-            <button class="short-action-btn" onclick="shortReact('${post.id}','like',this)">
+            <button class="short-action-btn" id="like-btn-${post.id}" onclick="shortReact('${post.id}','like',this)">
               <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
             </button>
             <span class="short-action-count" id="slike-${post.id}">${likeCount}</span>
@@ -594,14 +1020,12 @@
       wrap.appendChild(div);
     });
 
-    // IntersectionObserver: 화면에 보이는 영상만 재생
+    // IntersectionObserver
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         const item = entry.target;
         const url = item.dataset.videoUrl;
-
         if (entry.isIntersecting) {
-          // 화면에 들어오면 영상 생성
           if (!item.querySelector('iframe, video')) {
             const placeholder = item.querySelector('.short-video-placeholder');
             if (isDirectVideo(url)) {
@@ -609,8 +1033,7 @@
               v.src = url; v.autoplay = true; v.playsInline = true;
               v.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1;';
               if (placeholder) placeholder.replaceWith(v); else item.prepend(v);
-
-              // 커스텀 컨트롤 생성
+              // 커스텀 컨트롤
               const ctrl = document.createElement('div');
               ctrl.className = 'video-controls show';
               ctrl.innerHTML = `
@@ -618,7 +1041,7 @@
                   <div class="video-progress-bar" id="prog-bar-${item.dataset.postId}"></div>
                 </div>
                 <div class="video-ctrl-row">
-                  <button class="video-ctrl-btn" id="play-btn-${item.dataset.postId}" onclick="togglePlay('${item.dataset.postId}')">
+                  <button class="video-ctrl-btn" onclick="togglePlay('${item.dataset.postId}')">
                     <svg id="play-icon-${item.dataset.postId}" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                   </button>
                   <button class="video-ctrl-btn" onclick="toggleMute('${item.dataset.postId}')">
@@ -627,26 +1050,16 @@
                   <span class="video-time" id="time-${item.dataset.postId}">0:00 / 0:00</span>
                 </div>`;
               item.appendChild(ctrl);
-
-              // 탭으로 재생/정지
               const tapArea = document.createElement('div');
               tapArea.className = 'video-tap-area';
               tapArea.onclick = () => togglePlay(item.dataset.postId);
               item.appendChild(tapArea);
-
-              // 진행바 업데이트
               v.addEventListener('timeupdate', () => updateProgress(item.dataset.postId, v));
               v.addEventListener('loadedmetadata', () => updateProgress(item.dataset.postId, v));
-
-              // 진행바 클릭으로 seek
-              const progWrap = ctrl.querySelector('.video-progress-wrap');
-              progWrap.addEventListener('click', (e) => {
-                const rect = progWrap.getBoundingClientRect();
-                const pct = (e.clientX - rect.left) / rect.width;
-                v.currentTime = pct * v.duration;
+              ctrl.querySelector('.video-progress-wrap').addEventListener('click', (e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                v.currentTime = ((e.clientX - rect.left) / rect.width) * v.duration;
               });
-
-              item.dataset.videoEl = 'direct';
             } else {
               const f = document.createElement('iframe');
               f.src = getEmbed(url);
@@ -659,16 +1072,14 @@
             if (v) v.play();
           }
         } else {
-          // 화면에서 나가면 완전히 제거 (소리 완전 차단)
           const iframe = item.querySelector('iframe');
           const video = item.querySelector('video');
           if (iframe) {
             iframe.remove();
-            // placeholder 복원
             const ph = document.createElement('div');
             ph.className = 'short-video-placeholder';
             ph.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;z-index:1;';
-            ph.innerHTML = '<div style="width:40px;height:40px;border:2px solid #333;border-top-color:#ff3c3c;border-radius:50%;animation:spin 0.8s linear infinite;"></div>';
+            ph.innerHTML = '<div class="spinner"></div>';
             item.prepend(ph);
           }
           if (video) { video.pause(); video.src = ''; video.remove(); }
@@ -679,25 +1090,18 @@
     wrap.querySelectorAll('.short-item').forEach(item => observer.observe(item));
   }
 
-  // 직접 업로드 영상 컨트롤 함수
+  // 비디오 컨트롤
   function getVideoEl(postId) {
     const item = document.querySelector(`.short-item[data-post-id="${postId}"]`);
     return item ? item.querySelector('video') : null;
   }
-
   function togglePlay(postId) {
     const v = getVideoEl(postId);
     if (!v) return;
     const icon = document.getElementById(`play-icon-${postId}`);
-    if (v.paused) {
-      v.play();
-      icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-    } else {
-      v.pause();
-      icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-    }
+    if (v.paused) { v.play(); icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; }
+    else { v.pause(); icon.innerHTML = '<path d="M8 5v14l11-7z"/>'; }
   }
-
   function toggleMute(postId) {
     const v = getVideoEl(postId);
     if (!v) return;
@@ -707,17 +1111,11 @@
       ? '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
       : '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
   }
-
-  function formatTime(sec) {
-    if (isNaN(sec)) return '0:00';
-    const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
-
+  function formatTime(s) { if(isNaN(s)) return '0:00'; return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
   function updateProgress(postId, v) {
     const bar = document.getElementById(`prog-bar-${postId}`);
     const time = document.getElementById(`time-${postId}`);
-    if (bar && v.duration) bar.style.width = (v.currentTime / v.duration * 100) + '%';
+    if (bar && v.duration) bar.style.width = (v.currentTime/v.duration*100)+'%';
     if (time) time.textContent = `${formatTime(v.currentTime)} / ${formatTime(v.duration)}`;
   }
 
@@ -727,7 +1125,7 @@
     const { data: ex } = await sb.from('votes').select('id').eq('post_id', postId).eq('voter_id', voterId);
     if (ex && ex.length) return;
     await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId });
-    btn.classList.add(type === 'ai' ? 'voted-ai' : 'voted-real');
+    btn.classList.add(type==='ai' ? 'voted-ai' : 'voted-real');
   }
 
   async function shortReact(postId, type, btn) {
@@ -735,6 +1133,8 @@
     await sb.from('reactions').insert({ post_id: postId, type });
     const el = document.getElementById(`slike-${postId}`);
     if (el) el.textContent = parseInt(el.textContent) + 1;
+    btn.classList.add('liked', 'heart-pop');
+    setTimeout(() => btn.classList.remove('heart-pop'), 300);
   }
 
   // 피드
@@ -750,18 +1150,17 @@
         sb.from('reactions').select('*').eq('post_id', post.id),
         sb.from('comments').select('*').eq('post_id', post.id).order('created_at', { ascending: false }).limit(3),
       ]);
-      const aiV = (votes||[]).filter(v => v.vote_type==='ai').length;
-      const realV = (votes||[]).filter(v => v.vote_type==='real').length;
+      const aiV = (votes||[]).filter(v=>v.vote_type==='ai').length;
+      const realV = (votes||[]).filter(v=>v.vote_type==='real').length;
       const total = aiV + realV;
       const aiPct = total ? Math.round(aiV/total*100) : 50;
       const realPct = total ? 100-aiPct : 50;
-      const voterId = getVoterId();
-      const myVote = (votes||[]).find(v => v.voter_id===voterId);
+      const myVote = (votes||[]).find(v=>v.voter_id===getVoterId());
       const reactionTypes = [{type:'hot',emoji:'🔥'},{type:'funny',emoji:'😂'},{type:'wow',emoji:'🤯'},{type:'like',emoji:'👍'}];
+      const showVote = post.category==='guess' || post.category==='lab';
       const vLabel = post.category==='guess' ? '이 영상, AI야 진짜야? 👇' : '어떤 AI 툴로 만들었을까? 👇';
       const vBtn1 = post.category==='guess' ? '🤖 AI 같다' : '🤔 맞출 수 있다';
       const vBtn2 = post.category==='guess' ? '👤 진짜 같다' : '😵 모르겠다';
-      const showVote = post.category === 'guess' || post.category === 'lab';
 
       const voteHTML = showVote
         ? (currentUser
@@ -780,7 +1179,7 @@
           : `<div class="login-prompt-inline" onclick="showLoginModal()">🔒 로그인하면 투표·댓글 참여 가능해요</div>`)
         : (!currentUser ? `<div class="login-prompt-inline" onclick="showLoginModal()">🔒 로그인하면 댓글 참여 가능해요</div>` : '');
 
-      cards.push({ post, votes, reactions, comments, voteHTML, reactionTypes });
+      cards.push({ post, reactions, comments, voteHTML, reactionTypes });
     }
     container.innerHTML = '';
     cards.forEach(({ post, reactions, comments, voteHTML, reactionTypes }) => {
@@ -789,7 +1188,7 @@
       card.innerHTML = `
         <div class="video-wrapper">
           <div class="thumbnail-wrap" id="fthumb-${post.id}" onclick="playFeedVideo('${post.id}','${post.video_url}')">
-            <img class="thumbnail" src="${getThumb(post.video_url)}" alt="${post.title}">
+            <img class="thumbnail" src="${getThumb(post.video_url)}" alt="${post.title}" onerror="this.style.background='#111'">
             <div class="play-overlay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
           </div>
         </div>
@@ -802,11 +1201,11 @@
           </div>
           <div class="comment-section">
             <div class="comment-preview" id="fcmts-${post.id}">
-              ${(comments||[]).length ? (comments||[]).map(c=>`<div class="comment-item"><span class="nickname">${c.nickname}</span>${c.content}</div>`).join('') : '<div class="comment-item" style="color:#444">첫 댓글을 남겨보세요!</div>'}
+              ${(comments||[]).length ? (comments||[]).map(c=>`<div class="comment-item"><span class="nickname">${c.nickname}</span>${c.content}</div>`).join('') : '<div class="comment-item" style="color:var(--muted)">첫 댓글을 남겨보세요!</div>'}
             </div>
             ${currentUser
               ? `<div class="comment-input-wrap"><input class="comment-input" type="text" placeholder="댓글 남기기..." id="fci-${post.id}" maxlength="200" onkeydown="if(event.key==='Enter')submitFeedComment('${post.id}')"><button class="comment-submit" onclick="submitFeedComment('${post.id}')">등록</button></div>`
-              : `<div class="login-prompt-inline" onclick="showLoginModal()" style="margin-top:6px">댓글은 로그인 후 가능해요</div>`}
+              : `<div class="login-prompt-inline" onclick="showLoginModal()" style="margin-top:6px;">댓글은 로그인 후 가능해요</div>`}
           </div>
         </div>`;
       container.appendChild(card);
@@ -824,10 +1223,9 @@
 
   async function feedVote(postId, type, btn) {
     if (!currentUser) { showLoginModal(); return; }
-    const voterId = getVoterId();
-    const { data: ex } = await sb.from('votes').select('id').eq('post_id', postId).eq('voter_id', voterId);
+    const { data: ex } = await sb.from('votes').select('id').eq('post_id', postId).eq('voter_id', getVoterId());
     if (ex && ex.length) return;
-    await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId });
+    await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: getVoterId() });
     const { data: votes } = await sb.from('votes').select('*').eq('post_id', postId);
     const ai = votes.filter(v=>v.vote_type==='ai').length, real = votes.filter(v=>v.vote_type==='real').length, tot = ai+real;
     const ap = Math.round(ai/tot*100), rp = 100-ap;
@@ -845,6 +1243,7 @@
     if (!currentUser) { showLoginModal(); return; }
     await sb.from('reactions').insert({ post_id: postId, type });
     btn.querySelector('span').textContent = parseInt(btn.querySelector('span').textContent) + 1;
+    btn.classList.add('reacted');
   }
 
   async function submitFeedComment(postId) {
@@ -873,17 +1272,16 @@
       </div>`).join('');
   }
 
-  // 게시물 모달
   async function openModal(postId) {
-    const post = allPosts.find(p => p.id === postId); if (!post) return;
+    const post = allPosts.find(p => p.id===postId); if (!post) return;
     document.getElementById('modal-title').textContent = post.title;
     const { data: comments } = await sb.from('comments').select('*').eq('post_id', postId).order('created_at', { ascending: false });
     document.getElementById('modal-body').innerHTML = `
       <div class="modal-video"><iframe src="${getEmbed(post.video_url)}" allowfullscreen allow="autoplay"></iframe></div>
       <div style="margin-bottom:14px"><span class="category-badge ${post.category}">${catLabel(post.category)}</span></div>
-      <div style="font-size:14px;font-weight:700;margin-bottom:10px">💬 댓글 ${(comments||[]).length}개</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--muted2)">💬 댓글 ${(comments||[]).length}개</div>
       <div id="modal-comments" style="margin-bottom:12px">
-        ${(comments||[]).map(c=>`<div class="comment-item" style="margin-bottom:8px"><span class="nickname">${c.nickname}</span>${c.content}</div>`).join('') || '<p style="color:#666;font-size:13px">첫 댓글을 남겨보세요!</p>'}
+        ${(comments||[]).map(c=>`<div class="comment-item" style="margin-bottom:8px"><span class="nickname">${c.nickname}</span>${c.content}</div>`).join('') || '<p style="color:var(--muted);font-size:13px">첫 댓글을 남겨보세요!</p>'}
       </div>
       ${currentUser
         ? `<div class="comment-input-wrap"><input class="comment-input" type="text" placeholder="댓글 남기기..." id="mci" maxlength="200" onkeydown="if(event.key==='Enter')submitModalComment('${postId}')"><button class="comment-submit" onclick="submitModalComment('${postId}')">등록</button></div>`
