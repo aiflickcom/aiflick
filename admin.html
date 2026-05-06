@@ -783,6 +783,7 @@
         if (!body) throw new Error('본문을 입력해주세요.');
         const { error } = await sb.from('posts').insert({
           title, body, post_type: 'talk', category: 'funny',
+          user_id: currentUser.id,
         });
         if (error) throw error;
         document.getElementById('u-talk-title').value = '';
@@ -804,6 +805,7 @@
           const { error } = await sb.from('posts').insert({
             title, video_url: url, video_type: 'youtube',
             thumbnail_url: thumbnail, category, post_type, correct_answer: correctAnswer,
+            user_id: currentUser.id,
           });
           if (error) throw error;
           document.getElementById('u-video-url').value = '';
@@ -823,6 +825,7 @@
             title, video_url: publicUrl, video_type: 'upload',
             thumbnail_url: customThumb || '', storage_path: filePath,
             category, post_type, correct_answer: correctAnswer,
+            user_id: currentUser.id,
           });
           if (dbErr) throw dbErr;
           document.getElementById('u-progress-wrap').style.display = 'none';

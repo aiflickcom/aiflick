@@ -452,6 +452,127 @@
     #msg-wrap { display: none; padding-top: 110px; min-height: 100vh; position: relative; z-index: 1; }
     #msg-wrap.active { display: block; }
 
+    /* ── ME MODE ── */
+    #me-wrap { display: none; padding-top: 80px; min-height: 100vh; position: relative; z-index: 1; }
+    #me-wrap.active { display: block; }
+    .me-container { max-width: 980px; margin: 0 auto; padding: 16px 20px 80px; }
+
+    .profile-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      display: flex; align-items: center; gap: 20px;
+      margin-bottom: 24px;
+      position: relative; overflow: hidden;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(168,85,247,0.06), rgba(6,182,212,0.04));
+      pointer-events: none;
+    }
+    .profile-avatar {
+      width: 76px; height: 76px; border-radius: 50%;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 16px var(--glow);
+      object-fit: cover;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .profile-avatar.placeholder {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px; font-weight: 900;
+      color: white; letter-spacing: 1px;
+    }
+    .profile-info { flex: 1; min-width: 0; position: relative; }
+    .profile-name {
+      font-size: 20px; font-weight: 700;
+      color: var(--text); margin-bottom: 4px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .profile-email {
+      font-size: 12px; color: var(--muted);
+      font-family: monospace;
+      margin-bottom: 6px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .profile-joined {
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      font-family: 'Orbitron', sans-serif; font-weight: 700;
+    }
+    .profile-joined .num { color: var(--muted2); font-family: 'Space Grotesk', monospace; letter-spacing: 0; text-transform: none; font-weight: 500; }
+
+    .me-stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      margin-bottom: 28px;
+    }
+    .me-stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 14px;
+      text-align: center;
+    }
+    .me-stat-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px; font-weight: 900;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .me-stat-lbl {
+      font-size: 10px; color: var(--muted2);
+      margin-top: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .me-section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin: 28px 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .me-section-title .accent {
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .me-empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--muted); font-size: 13px;
+      background: var(--card);
+      border: 1px dashed var(--border2);
+      border-radius: var(--radius);
+    }
+    .me-empty .emoji { font-size: 36px; margin-bottom: 12px; }
+
+    .me-soon {
+      background: var(--card);
+      border: 1px dashed var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 1px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+    }
+
+    @media (max-width: 540px) {
+      .profile-card { flex-direction: column; text-align: center; padding: 24px 18px; }
+      .profile-info { width: 100%; }
+      .profile-name, .profile-email { white-space: normal; word-break: break-all; }
+      .me-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
     .msg-container { max-width: 1280px; margin: 0 auto; padding: 16px 20px 80px; }
 
     .empty-state {
@@ -961,6 +1082,7 @@
 
 <div class="user-menu" id="user-menu">
   <div class="user-menu-item" id="user-name-display" style="color:var(--muted);font-size:12px;pointer-events:none;"></div>
+  <div class="user-menu-item" onclick="enterMode('me')">내 페이지</div>
   <div class="user-menu-item danger" onclick="doLogout()">로그아웃</div>
 </div>
 
@@ -974,6 +1096,13 @@
 <!-- ── MSG MODE ── -->
 <div id="msg-wrap">
   <div class="msg-container" id="msg-container">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ── ME MODE (My Page) ── -->
+<div id="me-wrap">
+  <div class="me-container" id="me-container">
     <div class="loading"><div class="spinner"></div></div>
   </div>
 </div>
@@ -1152,6 +1281,8 @@
     } else if (currentMode === 'msg') {
       // Make 버튼은 항상 보이게 — 클릭 시 로그인 안 됐으면 로그인 모달 띄움
       modeLink = `<button class="login-btn make-btn" onclick="showUploadModal()">+ Make</button>`;
+    } else if (currentMode === 'me') {
+      modeLink = `<button class="login-btn mode-link" onclick="enterMode('msg')">MSG →</button>`;
     }
     let auth;
     if (currentUser) {
@@ -1247,7 +1378,8 @@
         const { error } = await sb.from('posts').insert({
           title, body,
           post_type: 'talk',
-          category: 'funny', // 호환용 기본값 (NOT NULL일 수 있음)
+          category: 'funny',
+          user_id: currentUser.id,
         });
         if (error) throw error;
         document.getElementById('u-talk-title').value = '';
@@ -1268,6 +1400,7 @@
             title, video_url: url, video_type: 'youtube',
             thumbnail_url: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
             category, post_type, correct_answer: correctAnswer,
+            user_id: currentUser.id,
           });
           if (error) throw error;
           document.getElementById('u-video-url').value = '';
@@ -1286,6 +1419,7 @@
             title, video_url: publicUrl, video_type: 'upload',
             thumbnail_url: '', storage_path: filePath,
             category, post_type, correct_answer: correctAnswer,
+            user_id: currentUser.id,
           });
           if (dbErr) throw dbErr;
           document.getElementById('u-progress-wrap').style.display = 'none';
@@ -1346,18 +1480,24 @@
     document.getElementById('main-header').classList.add('show');
     document.getElementById('bc-mode').textContent = mode;
 
-    if (mode === 'flick') {
-      document.getElementById('flick-wrap').classList.add('active');
-      document.getElementById('msg-wrap').classList.remove('active');
-      document.getElementById('header-sub').classList.remove('show');
-      renderFlick();
-    } else {
-      document.getElementById('flick-wrap').classList.remove('active');
-      document.getElementById('msg-wrap').classList.add('active');
-      document.getElementById('header-sub').classList.add('show');
-      setMsgTab(currentMsgTab);
+    // ME 모드는 로그인 필수
+    if (mode === 'me' && !currentUser) {
+      showLoginModal();
+      currentMode = null;
+      return;
     }
+
+    document.getElementById('flick-wrap').classList.toggle('active', mode === 'flick');
+    document.getElementById('msg-wrap').classList.toggle('active', mode === 'msg');
+    document.getElementById('me-wrap').classList.toggle('active', mode === 'me');
+    document.getElementById('header-sub').classList.toggle('show', mode === 'msg');
+
+    if (mode === 'flick') renderFlick();
+    else if (mode === 'msg') setMsgTab(currentMsgTab);
+    else if (mode === 'me') renderMe();
+
     updateHeaderRight();
+    document.getElementById('user-menu').classList.remove('show');
   }
 
   function goLanding(e) {
@@ -1384,7 +1524,7 @@
     else if (currentMode === 'msg') {
       if (currentMsgTab === 'share') renderShare();
       else renderGuess();
-    }
+    } else if (currentMode === 'me') renderMe();
   }
 
   async function loadAll() {
@@ -1600,7 +1740,7 @@
     const voterId = getVoterId();
     const { data: ex } = await sb.from('votes').select('id').eq('post_id', postId).eq('voter_id', voterId);
     if (!ex || !ex.length) {
-      await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId });
+      await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId, user_id: currentUser?.id || null });
     }
     btn.parentElement.querySelectorAll('.guess-slideup-btn').forEach(b => b.classList.remove('voted'));
     btn.classList.add('voted');
@@ -1630,7 +1770,7 @@
 
   async function shortReact(postId, type, btn) {
     if (!currentUser) { showLoginModal(); return; }
-    await sb.from('reactions').insert({ post_id: postId, type });
+    await sb.from('reactions').insert({ post_id: postId, type, user_id: currentUser?.id || null });
     const el = document.getElementById(`slike-${postId}`);
     if (el) el.textContent = parseInt(el.textContent) + 1;
     btn.classList.add('liked', 'heart-pop');
@@ -1657,6 +1797,74 @@
       return;
     }
     container.innerHTML = `<div class="grid">${posts.map(renderPostCard).join('')}</div>`;
+  }
+
+  // ── ME / My Page 렌더 ──
+  async function renderMe() {
+    const container = document.getElementById('me-container');
+    if (!currentUser) {
+      container.innerHTML = `<div class="me-empty"><div class="emoji">🔒</div>로그인하면 내 페이지가 보여요.<br><button class="login-btn" style="margin-top:14px" onclick="showLoginModal()">로그인</button></div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+
+    const uid = currentUser.id;
+    const avatar = currentUser.user_metadata?.avatar_url;
+    const name = currentUser.user_metadata?.full_name || currentUser.email || 'user';
+    const email = currentUser.email || '';
+    const joinedAt = currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString('ko-KR') : '—';
+
+    // 내가 올린 포스트 + 활동 카운트 병렬 로드
+    let myPosts = [], voteCount = 0, commentCount = 0, reactionCount = 0;
+    try {
+      const [pRes, vRes, cRes, rRes] = await Promise.all([
+        sb.from('posts').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+        sb.from('votes').select('id', { count: 'exact', head: true }).eq('user_id', uid),
+        sb.from('comments').select('id', { count: 'exact', head: true }).eq('user_id', uid),
+        sb.from('reactions').select('id', { count: 'exact', head: true }).eq('user_id', uid),
+      ]);
+      myPosts = pRes.data || [];
+      voteCount = vRes.count || 0;
+      commentCount = cRes.count || 0;
+      reactionCount = rRes.count || 0;
+    } catch (err) {
+      // user_id 칼럼이 없을 가능성 — 마이그레이션 안 됐으면 우아하게 빈 상태
+      console.warn('My Page query error:', err);
+    }
+
+    const profileHTML = `
+      <div class="profile-card">
+        ${avatar
+          ? `<img class="profile-avatar" src="${escapeHtml(avatar)}" alt="">`
+          : `<div class="profile-avatar placeholder">${escapeHtml(String(name).slice(0,2).toUpperCase())}</div>`}
+        <div class="profile-info">
+          <div class="profile-name">${escapeHtml(name)}</div>
+          <div class="profile-email">${escapeHtml(email)}</div>
+          <div class="profile-joined">JOINED <span class="num">${joinedAt}</span></div>
+        </div>
+      </div>`;
+
+    const statsHTML = `
+      <div class="me-stats-grid">
+        <div class="me-stat-card"><div class="me-stat-num">${myPosts.length}</div><div class="me-stat-lbl">Posts</div></div>
+        <div class="me-stat-card"><div class="me-stat-num">${voteCount}</div><div class="me-stat-lbl">Votes</div></div>
+        <div class="me-stat-card"><div class="me-stat-num">${commentCount}</div><div class="me-stat-lbl">Comments</div></div>
+        <div class="me-stat-card"><div class="me-stat-num">${reactionCount}</div><div class="me-stat-lbl">Reactions</div></div>
+      </div>`;
+
+    const postsHTML = myPosts.length
+      ? `<div class="grid">${myPosts.map(renderPostCard).join('')}</div>`
+      : `<div class="me-empty"><div class="emoji">🎬</div>아직 올린 게 없어요.<br><button class="login-btn make-btn" style="margin-top:14px" onclick="enterMode('msg');setTimeout(showUploadModal,100)">+ Make 첫 포스트</button></div>`;
+
+    container.innerHTML = `
+      ${profileHTML}
+      ${statsHTML}
+      <div class="me-section-title">내 포스트 <span class="accent">posts</span></div>
+      ${postsHTML}
+      <div class="me-section-title">Guess 기록 <span class="accent">stats</span></div>
+      <div class="me-soon">DATA 쌓이는 중 · 곧 정확도 / 스트릭 표시 예정</div>
+    `;
   }
 
   function renderPostCard(post) {
@@ -1784,7 +1992,7 @@
     const voterId = getVoterId();
     const { data: ex } = await sb.from('votes').select('id').eq('post_id', postId).eq('voter_id', voterId);
     if (!ex || !ex.length) {
-      await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId });
+      await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId, user_id: currentUser?.id || null });
     }
     btn.parentElement.querySelectorAll('.modal-vote-btn').forEach(b => b.classList.remove('voted'));
     btn.classList.add('voted');
@@ -1803,7 +2011,7 @@
 
   async function modalReact(postId, type, btn) {
     if (!currentUser) { showLoginModal(); return; }
-    await sb.from('reactions').insert({ post_id: postId, type });
+    await sb.from('reactions').insert({ post_id: postId, type, user_id: currentUser?.id || null });
     btn.querySelector('span').textContent = parseInt(btn.querySelector('span').textContent) + 1;
     btn.classList.add('reacted');
   }
@@ -1813,7 +2021,7 @@
     const input = document.getElementById('mci');
     const content = input.value.trim(); if (!content) return;
     const nickname = currentUser.user_metadata?.full_name || 'user_' + Math.floor(Math.random()*9999);
-    await sb.from('comments').insert({ post_id: postId, content, nickname });
+    await sb.from('comments').insert({ post_id: postId, content, nickname, user_id: currentUser?.id || null });
     const div = document.createElement('div'); div.className = 'comment-item'; div.style.marginBottom = '8px';
     div.innerHTML = `<span class="nickname">${escapeHtml(nickname)}</span>${escapeHtml(content)}`;
     document.getElementById('modal-comments').appendChild(div);
