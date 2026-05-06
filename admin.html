@@ -3,328 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIFlick 관리자</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <title>AIFLICK / admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Orbitron:wght@700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #0a0a0a;
-      --card: #111111;
-      --card2: #1a1a1a;
-      --border: #222222;
-      --accent: #ff3c3c;
-      --text: #f0f0f0;
-      --muted: #666666;
-      --success: #00dc64;
-      --radius: 14px;
+      --bg: #060608;
+      --surface: #0d0d12;
+      --card: #11111a;
+      --card2: #18181f;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --accent: #a855f7;
+      --accent2: #06b6d4;
+      --accent3: #f59e0b;
+      --glow: rgba(168,85,247,0.4);
+      --glow2: rgba(6,182,212,0.4);
+      --text: #f1f0ff;
+      --muted: #6b6b80;
+      --muted2: #9999aa;
+      --success: #34d399;
+      --danger: #f87171;
+      --radius: 16px;
+      --radius-sm: 10px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
       min-height: 100vh;
     }
-
-    /* LOGIN */
-    .login-wrap {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(168,85,247,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168,85,247,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
     }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; }
 
-    .login-box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 40px;
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .login-logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 32px;
-      letter-spacing: 2px;
-      background: linear-gradient(90deg, #ff3c3c, #ff8c00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-    }
-
-    .login-sub {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 28px;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .form-input {
-      width: 100%;
-      background: var(--card2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 14px;
-      color: var(--text);
-      font-family: 'Noto Sans KR', sans-serif;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .form-input:focus { border-color: var(--accent); }
-    .form-input::placeholder { color: var(--muted); }
-
-    .btn-primary {
-      width: 100%;
-      background: var(--accent);
-      border: none;
-      border-radius: 8px;
-      padding: 12px;
-      color: white;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif;
-      transition: opacity 0.2s;
-      margin-top: 8px;
-    }
-
-    .btn-primary:hover { opacity: 0.85; }
-
-    .error-msg {
-      background: rgba(255,60,60,0.1);
-      border: 1px solid rgba(255,60,60,0.3);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: var(--accent);
-      margin-top: 12px;
-      display: none;
-    }
-
-    /* ADMIN LAYOUT */
-    .admin-wrap { display: none; }
-
+    /* HEADER */
     header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(10,10,10,0.95);
-      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(6,6,8,0.85);
+      backdrop-filter: blur(20px) saturate(180%);
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 24px;
-      letter-spacing: 2px;
-      background: linear-gradient(90deg, #ff3c3c, #ff8c00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
       gap: 12px;
     }
-
-    .user-email {
-      font-size: 13px;
-      color: var(--muted);
+    .breadcrumb { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px; font-weight: 900; letter-spacing: 3px;
+      background: linear-gradient(135deg, #a855f7 0%, #06b6d4 50%, #a855f7 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
     }
-
-    .logout-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif;
-      transition: all 0.2s;
+    @keyframes shimmer { to { background-position: 200% center; } }
+    .bc-sep { color: var(--muted); font-weight: 300; font-size: 18px; }
+    .bc-mode {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: 3px;
+      color: var(--text); text-transform: uppercase;
     }
-
-    .logout-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    .home-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif;
-      text-decoration: none;
-      transition: all 0.2s;
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .btn {
+      background: transparent; border: 1px solid var(--border2);
+      color: var(--muted2); padding: 7px 14px;
+      border-radius: 20px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
     }
+    .btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow); }
+    .btn.danger:hover { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 10px rgba(248,113,113,0.3); }
+    .user-email { font-size: 12px; color: var(--muted); font-family: monospace; }
 
-    .home-btn:hover { border-color: #444; color: var(--text); }
-
-    /* ADMIN CONTENT */
-    .admin-content {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 32px 20px;
-    }
+    /* CONTAINER */
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; position: relative; z-index: 1; }
 
     .section-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin: 32px 0 16px;
+      padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
     }
-
-    /* UPLOAD FORM */
-    .upload-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      margin-bottom: 32px;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .form-group-full { grid-column: 1 / -1; }
-
-    select.form-input {
-      cursor: pointer;
-    }
-
-    .youtube-preview {
-      margin-top: 10px;
-      border-radius: 8px;
-      overflow: hidden;
-      display: none;
-    }
-
-    .youtube-preview img {
-      width: 100%;
-      max-width: 320px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    .btn-submit {
-      background: var(--accent);
-      border: none;
-      border-radius: 8px;
-      padding: 12px 28px;
-      color: white;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif;
-      transition: opacity 0.2s;
-      margin-top: 8px;
-    }
-
-    .btn-submit:hover { opacity: 0.85; }
-    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .success-msg {
-      background: rgba(0,220,100,0.1);
-      border: 1px solid rgba(0,220,100,0.3);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: var(--success);
-      margin-top: 12px;
-      display: none;
-    }
-
-    /* POST LIST */
-    .posts-table {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-
-    .table-header {
-      display: grid;
-      grid-template-columns: 1fr 100px 100px 80px;
-      padding: 12px 16px;
-      background: var(--card2);
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .table-row {
-      display: grid;
-      grid-template-columns: 1fr 100px 100px 80px;
-      padding: 14px 16px;
-      border-top: 1px solid var(--border);
-      align-items: center;
-      transition: background 0.15s;
-    }
-
-    .table-row:hover { background: var(--card2); }
-
-    .post-title-cell {
-      font-size: 14px;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .post-category-cell { font-size: 13px; color: var(--muted); }
-    .post-date-cell { font-size: 12px; color: var(--muted); }
-
-    .delete-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif;
-      transition: all 0.2s;
-    }
-
-    .delete-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .empty-posts {
-      padding: 40px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
+    .section-title:first-child { margin-top: 0; }
+    .section-title .accent {
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
     /* STATS */
@@ -332,86 +108,365 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 12px;
-      margin-bottom: 32px;
     }
-
     .stat-card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px;
+      padding: 22px 18px;
       text-align: center;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
     }
-
+    .stat-card:hover {
+      border-color: rgba(168,85,247,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 18px rgba(168,85,247,0.1);
+    }
     .stat-number {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 36px;
-      color: var(--accent);
-      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 36px; font-weight: 900; letter-spacing: 1px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1.1;
     }
-
     .stat-label {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 4px;
+      font-size: 11px; color: var(--muted2);
+      margin-top: 8px; letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 600;
     }
 
+    /* TYPE BREAKDOWN */
+    .type-breakdown {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin-top: 12px;
+    }
+    .type-stat {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .type-stat .lbl {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 2px;
+      color: var(--muted2);
+    }
+    .type-stat .num { font-size: 18px; font-weight: 700; color: var(--text); font-family: 'Space Grotesk', monospace; }
+    .type-stat.flick .lbl { color: var(--muted2); }
+    .type-stat.guess .lbl { color: var(--accent2); }
+    .type-stat.talk .lbl { color: var(--accent); }
+
+    /* MAKE FORM */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .make-type-tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+    .make-type-tab {
+      flex: 1; background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--muted2); padding: 10px;
+      border-radius: 10px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+    .make-type-tab:hover { border-color: var(--accent); color: var(--accent); }
+    .make-type-tab.active {
+      background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(6,182,212,0.2));
+      border-color: var(--accent); color: var(--text);
+    }
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 12px; color: var(--muted2);
+      margin-bottom: 6px; font-weight: 600;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px; color: var(--text);
+      font-family: inherit; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(168,85,247,0.2);
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--muted); }
+    .form-textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
+    .form-select { cursor: pointer; }
+
+    .upload-type-row { display: flex; gap: 6px; margin-bottom: 12px; }
     .upload-type-btn {
-      background: var(--card2); border: 1px solid var(--border); color: var(--muted);
-      padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s;
+      flex: 1; background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--muted2); padding: 8px;
+      border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
     }
-    .upload-type-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .upload-type-btn.active {
+      background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(6,182,212,0.2));
+      border-color: var(--accent); color: var(--text);
+    }
 
-    @media (max-width: 600px) {
-      .form-row { grid-template-columns: 1fr; }
+    .yt-preview { margin-top: 8px; }
+    .yt-preview img {
+      width: 100%; max-width: 280px;
+      border-radius: 8px; border: 1px solid var(--border);
+    }
+
+    .progress-wrap { margin-top: 8px; }
+    .progress-meta { font-size: 12px; color: var(--muted2); margin-bottom: 4px; font-weight: 600; }
+    .progress-bar-bg { background: var(--card2); border-radius: 4px; height: 5px; border: 1px solid var(--border); overflow: hidden; }
+    .progress-bar { background: linear-gradient(90deg, var(--accent), var(--accent2)); height: 100%; border-radius: 4px; width: 0%; transition: width 0.3s; }
+
+    .guess-toggle {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .guess-toggle-row {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--text); font-weight: 600;
+      cursor: pointer; user-select: none;
+    }
+    .guess-toggle-row input { accent-color: var(--accent); cursor: pointer; }
+    .guess-toggle-desc { font-size: 11px; color: var(--muted); margin-top: 4px; padding-left: 26px; line-height: 1.5; }
+    .guess-answer-row {
+      display: none; margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+      align-items: center; gap: 10px;
+    }
+    .guess-answer-row.show { display: flex; }
+
+    .btn-primary {
+      width: 100%; padding: 12px 20px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; border-radius: 10px;
+      color: white; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 18px var(--glow); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .alert {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      display: none;
+    }
+    .alert.show { display: block; }
+    .alert-success {
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.3);
+      color: var(--success);
+    }
+    .alert-error {
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: var(--danger);
+    }
+
+    /* FILTER */
+    .post-filters {
+      display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted2);
+      padding: 5px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-btn.active {
+      background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(6,182,212,0.2));
+      border-color: var(--accent); color: var(--text);
+    }
+
+    /* POSTS TABLE */
+    .posts-table {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-header {
+      display: grid;
+      grid-template-columns: 1fr 90px 90px 90px 80px;
+      padding: 12px 18px;
+      background: var(--card2);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px; color: var(--muted);
+      font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .table-row {
+      display: grid;
+      grid-template-columns: 1fr 90px 90px 90px 80px;
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      align-items: center;
+      transition: background 0.15s;
+      gap: 8px;
+    }
+    .table-row:hover { background: var(--card2); }
+    .post-title-cell {
+      font-size: 13px; font-weight: 600;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .type-tag {
+      display: inline-block;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+      padding: 3px 8px; border-radius: 4px;
+    }
+    .type-tag.flick { background: rgba(255,255,255,0.06); color: var(--muted2); border: 1px solid var(--border2); }
+    .type-tag.guess { background: rgba(6,182,212,0.15); color: var(--accent2); border: 1px solid rgba(6,182,212,0.3); }
+    .type-tag.talk { background: rgba(168,85,247,0.15); color: var(--accent); border: 1px solid rgba(168,85,247,0.3); }
+    .answer-tag {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 7px; border-radius: 4px;
+    }
+    .answer-tag.ai { background: rgba(6,182,212,0.15); color: var(--accent2); }
+    .answer-tag.real { background: rgba(168,85,247,0.15); color: var(--accent); }
+    .post-date-cell { font-size: 11px; color: var(--muted); font-family: monospace; }
+    .delete-btn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      padding: 5px 10px; border-radius: 6px;
+      font-size: 11px; cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+    }
+    .delete-btn:hover {
+      border-color: var(--danger); color: var(--danger);
+    }
+    .empty-posts {
+      padding: 60px 20px; text-align: center;
+      color: var(--muted); font-size: 13px;
+    }
+
+    /* AUTH GATE */
+    .auth-gate {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; position: relative; z-index: 1;
+    }
+    .auth-gate.hide { display: none; }
+    .auth-box {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 44px 36px;
+      width: 100%; max-width: 420px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 40px rgba(168,85,247,0.15);
+    }
+    .auth-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 28px; font-weight: 900; letter-spacing: 4px;
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .auth-sub {
+      color: var(--muted2); font-size: 13px;
+      letter-spacing: 2px; font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      margin-bottom: 28px;
+    }
+    .auth-msg { color: var(--muted2); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+    .google-btn {
+      width: 100%; background: white; border: none; border-radius: 12px;
+      padding: 13px 20px; font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      color: #1a1a1a; transition: all 0.2s; font-family: inherit;
+    }
+    .google-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    .auth-back {
+      display: inline-block; margin-top: 16px;
+      font-size: 12px; color: var(--muted);
+      cursor: pointer;
+    }
+    .auth-back:hover { color: var(--text); }
+
+    /* admin-wrap initially hidden */
+    #admin-wrap { display: none; }
+    #admin-wrap.show { display: block; }
+
+    @media (max-width: 700px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .type-breakdown { grid-template-columns: 1fr; }
       .table-header, .table-row {
-        grid-template-columns: 1fr 80px 60px;
+        grid-template-columns: 1fr 80px 70px;
+        gap: 6px;
       }
-      .post-date-cell { display: none; }
+      .table-header > div:nth-child(3),
+      .table-row > div:nth-child(3),
+      .table-header > div:nth-child(4),
+      .table-row > div:nth-child(4) { display: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- 로그인 화면 -->
-<div class="login-wrap" id="login-wrap">
-  <div class="login-box">
-    <div class="login-logo">AIFlick</div>
-    <div class="login-sub">관리자 로그인</div>
-    <div class="form-group">
-      <label class="form-label">이메일</label>
-      <input class="form-input" type="email" id="login-email" placeholder="admin@email.com">
-    </div>
-    <div class="form-group">
-      <label class="form-label">비밀번호</label>
-      <input class="form-input" type="password" id="login-password" placeholder="••••••••"
-        onkeydown="if(event.key==='Enter') doLogin()">
-    </div>
-    <button class="btn-primary" onclick="doLogin()">로그인</button>
-    <div class="error-msg" id="login-error"></div>
+<!-- AUTH GATE (Google 로그인 안 됐거나 admin 아닌 경우) -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-box">
+    <div class="auth-logo">AIFLICK</div>
+    <div class="auth-sub">/ ADMIN</div>
+    <div class="auth-msg" id="auth-msg">관리자 페이지에 접근하려면 Google로 로그인해주세요.</div>
+    <button class="google-btn" id="google-btn" onclick="loginWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Google로 로그인
+    </button>
+    <a class="auth-back" href="index.html">← 사이트로 돌아가기</a>
   </div>
 </div>
 
-<!-- 어드민 화면 -->
-<div class="admin-wrap" id="admin-wrap">
+<!-- ADMIN -->
+<div id="admin-wrap">
   <header>
-    <a href="index.html" class="logo" style="text-decoration:none">AIFlick Admin</a>
+    <div class="breadcrumb">
+      <a class="logo" href="index.html">AIFLICK</a>
+      <span class="bc-sep">/</span>
+      <span class="bc-mode">admin</span>
+    </div>
     <div class="header-right">
       <span class="user-email" id="user-email"></span>
-      <a href="index.html" class="home-btn">← 사이트</a>
-      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+      <a class="btn" href="index.html">← 사이트</a>
+      <button class="btn danger" onclick="doLogout()">로그아웃</button>
     </div>
   </header>
 
-  <div class="admin-content">
+  <div class="container">
 
-    <!-- 통계 -->
+    <!-- 전체 통계 -->
+    <div class="section-title">통계 <span class="accent">stats</span></div>
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number" id="stat-posts">0</div>
-        <div class="stat-label">영상</div>
+        <div class="stat-label">총 포스트</div>
       </div>
       <div class="stat-card">
         <div class="stat-number" id="stat-votes">0</div>
@@ -426,73 +481,103 @@
         <div class="stat-label">댓글</div>
       </div>
     </div>
+    <div class="type-breakdown">
+      <div class="type-stat flick"><span class="lbl">FLICK</span><span class="num" id="stat-flick">0</span></div>
+      <div class="type-stat guess"><span class="lbl">GUESS</span><span class="num" id="stat-guess">0</span></div>
+      <div class="type-stat talk"><span class="lbl">TALK</span><span class="num" id="stat-talk">0</span></div>
+    </div>
 
-    <!-- 영상 업로드 -->
-    <div class="upload-card">
-      <div class="section-title">📤 영상 업로드</div>
-
-      <!-- 업로드 방식 선택 -->
-      <div style="display:flex;gap:8px;margin-bottom:20px;">
-        <button class="upload-type-btn active" id="type-youtube" onclick="setUploadType('youtube')">🔗 YouTube URL</button>
-        <button class="upload-type-btn" id="type-file" onclick="setUploadType('file')">📁 파일 직접 업로드</button>
+    <!-- + Make -->
+    <div class="section-title">+ Make</div>
+    <div class="form-card">
+      <div class="make-type-tabs">
+        <button class="make-type-tab active" id="m-tab-video" onclick="setMakeType('video')">영상</button>
+        <button class="make-type-tab" id="m-tab-text" onclick="setMakeType('text')">글 (Talk)</button>
       </div>
 
-      <div class="form-row">
-        <!-- YouTube 방식 -->
-        <div class="form-group form-group-full" id="youtube-section">
-          <label class="form-label">YouTube URL *</label>
-          <input class="form-input" type="url" id="video-url"
-            placeholder="https://www.youtube.com/watch?v=..."
-            oninput="previewYoutube(this.value)">
-          <div class="youtube-preview" id="yt-preview">
-            <img id="yt-thumb" src="" alt="썸네일 미리보기">
-          </div>
+      <!-- 영상 -->
+      <div id="make-video-section">
+        <div class="upload-type-row">
+          <button class="upload-type-btn active" id="u-type-youtube" onclick="setUploadType('youtube')">🔗 YouTube URL</button>
+          <button class="upload-type-btn" id="u-type-file" onclick="setUploadType('file')">📁 파일 업로드</button>
         </div>
 
-        <!-- 파일 방식 -->
-        <div class="form-group form-group-full" id="file-section" style="display:none;">
-          <label class="form-label">영상 파일 * (최대 50MB, mp4/webm)</label>
-          <input class="form-input" type="file" id="video-file" accept="video/mp4,video/webm,video/quicktime"
-            onchange="previewFile(this)">
-          <div id="file-preview" style="margin-top:8px;font-size:13px;color:var(--muted);"></div>
-          <!-- 업로드 진행바 -->
-          <div id="progress-wrap" style="display:none;margin-top:10px;">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">업로드 중... <span id="progress-pct">0</span>%</div>
-            <div style="background:var(--border);border-radius:4px;height:6px;">
-              <div id="progress-bar" style="background:var(--accent);height:6px;border-radius:4px;width:0%;transition:width 0.3s;"></div>
+        <div id="u-youtube-section">
+          <div class="form-group">
+            <label class="form-label">YouTube URL *</label>
+            <input class="form-input" type="url" id="u-video-url" placeholder="https://www.youtube.com/watch?v=..." oninput="previewYoutube(this.value)">
+            <div class="yt-preview" id="u-yt-preview" style="display:none;"><img id="u-yt-thumb" src=""></div>
+          </div>
+        </div>
+        <div id="u-file-section" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">영상 파일 * (최대 50MB)</label>
+            <input class="form-input" type="file" id="u-video-file" accept="video/mp4,video/webm,video/quicktime" onchange="previewFile(this)">
+            <div id="u-file-preview" style="font-size:12px;color:var(--muted);margin-top:5px;"></div>
+            <div class="progress-wrap" id="u-progress-wrap" style="display:none;">
+              <div class="progress-meta">업로드 중... <span id="u-progress-pct">0</span>%</div>
+              <div class="progress-bar-bg"><div class="progress-bar" id="u-progress-bar"></div></div>
             </div>
           </div>
         </div>
 
-        <div class="form-group form-group-full">
-          <label class="form-label">제목 *</label>
-          <input class="form-input" type="text" id="video-title" placeholder="영상 제목을 입력하세요">
-        </div>
         <div class="form-group">
-          <label class="form-label">카테고리</label>
-          <select class="form-input" id="video-category">
-            <option value="hot">🔥 핫</option>
-            <option value="funny">😂 웃긴</option>
-            <option value="guess">❓ 맞춰봐</option>
-            <option value="lab">🧪 실험실</option>
-          </select>
+          <label class="form-label">제목 *</label>
+          <input class="form-input" type="text" id="u-video-title" placeholder="영상 제목">
         </div>
-        <div class="form-group" id="thumb-section">
+
+        <!-- Guess 모드 토글 -->
+        <div class="guess-toggle">
+          <label class="guess-toggle-row">
+            <input type="checkbox" id="u-is-guess" onchange="toggleGuessAnswer()">
+            <span>Guess 모드 — 다른 사람이 맞히기</span>
+          </label>
+          <div class="guess-toggle-desc">정답을 비공개로 두고 사용자들이 AI/Real 투표.</div>
+          <div class="guess-answer-row" id="u-guess-answer-row">
+            <span style="color:var(--muted2);font-weight:600;font-size:12px;">정답:</span>
+            <select class="form-select" id="u-guess-answer" style="flex:1;">
+              <option value="ai">AI</option>
+              <option value="real">Real (진짜)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">썸네일 URL (선택)</label>
-          <input class="form-input" type="url" id="video-thumb" placeholder="비워두면 YouTube 자동 적용">
+          <input class="form-input" type="url" id="u-thumb" placeholder="비워두면 YouTube 자동 적용">
         </div>
       </div>
-      <button class="btn-submit" id="upload-btn" onclick="uploadPost()">업로드</button>
-      <div class="success-msg" id="upload-success">✅ 업로드 완료!</div>
-      <div class="error-msg" id="upload-error"></div>
+
+      <!-- 글 (Talk) -->
+      <div id="make-text-section" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">제목 *</label>
+          <input class="form-input" type="text" id="u-talk-title" placeholder="글 제목">
+        </div>
+        <div class="form-group">
+          <label class="form-label">본문 *</label>
+          <textarea class="form-textarea" id="u-talk-body" placeholder="프롬프트, 워크플로우, 후기, 토론거리..."></textarea>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="upload-btn" onclick="submitUpload()">올리기</button>
+      <div class="alert alert-error" id="upload-error"></div>
+      <div class="alert alert-success" id="upload-success">✅ 올라갔어요</div>
     </div>
 
-    <!-- 영상 목록 -->
-    <div class="section-title">📋 영상 목록</div>
+    <!-- 포스트 목록 -->
+    <div class="section-title">포스트 목록 <span class="accent">posts</span></div>
+    <div class="post-filters">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" data-filter="flick" onclick="setFilter('flick')">Flick</button>
+      <button class="filter-btn" data-filter="guess" onclick="setFilter('guess')">Guess</button>
+      <button class="filter-btn" data-filter="talk" onclick="setFilter('talk')">Talk</button>
+    </div>
     <div class="posts-table">
       <div class="table-header">
         <div>제목</div>
-        <div>카테고리</div>
+        <div>타입</div>
+        <div>정답</div>
         <div>날짜</div>
         <div>관리</div>
       </div>
@@ -510,255 +595,257 @@
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let currentUser = null;
+  let allPosts = [];
+  let currentFilter = 'all';
+  let makeType = 'video';
   let uploadType = 'youtube';
 
-  function setUploadType(type) {
-    uploadType = type;
-    document.getElementById('type-youtube').classList.toggle('active', type === 'youtube');
-    document.getElementById('type-file').classList.toggle('active', type === 'file');
-    document.getElementById('youtube-section').style.display = type === 'youtube' ? 'block' : 'none';
-    document.getElementById('file-section').style.display = type === 'file' ? 'block' : 'none';
-    document.getElementById('thumb-section').style.display = type === 'youtube' ? 'block' : 'none';
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   }
 
-  function previewFile(input) {
-    const file = input.files[0];
-    const preview = document.getElementById('file-preview');
-    if (!file) { preview.textContent = ''; return; }
-    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-    if (file.size > 50 * 1024 * 1024) {
-      preview.innerHTML = '<span style="color:var(--accent)">⚠️ 50MB를 초과했어요. 더 작은 파일을 사용해주세요.</span>';
-      input.value = '';
-      return;
-    }
-    preview.innerHTML = `✅ <strong>${file.name}</strong> (${sizeMB}MB)`;
-  }
-
-  // YouTube ID 추출
   function getYouTubeId(url) {
-    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&\n?#]+)/);
-    return match ? match[1] : null;
+    if (!url) return null;
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&\n?#]+)/);
+    return m ? m[1] : null;
+  }
+  function getPostType(post) {
+    if (post.post_type) return post.post_type;
+    if (!post.video_url && post.body) return 'talk';
+    if (post.category === 'guess' || post.category === 'lab') return 'guess';
+    return 'flick';
   }
 
-  // YouTube 썸네일 미리보기
-  function previewYoutube(url) {
-    const id = getYouTubeId(url);
-    const preview = document.getElementById('yt-preview');
-    const thumb = document.getElementById('yt-thumb');
-    if (id) {
-      thumb.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-      preview.style.display = 'block';
-    } else {
-      preview.style.display = 'none';
-    }
-  }
-
-  // 로그인
-  async function doLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const errEl = document.getElementById('login-error');
-
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      errEl.textContent = '로그인 실패: ' + error.message;
-      errEl.style.display = 'block';
-      return;
-    }
-
-    // admin 체크
-    const { data: profile } = await sb
-      .from('profiles').select('is_admin').eq('id', data.user.id).single();
-
-    if (!profile?.is_admin) {
-      await sb.auth.signOut();
-      errEl.textContent = '관리자 권한이 없습니다.';
-      errEl.style.display = 'block';
-      return;
-    }
-
-    currentUser = data.user;
-    showAdmin();
-  }
-
-  // 로그아웃
-  async function doLogout() {
-    await sb.auth.signOut();
-    document.getElementById('login-wrap').style.display = 'flex';
-    document.getElementById('admin-wrap').style.display = 'none';
-    currentUser = null;
-  }
-
-  // 어드민 화면 표시
-  function showAdmin() {
-    document.getElementById('login-wrap').style.display = 'none';
-    document.getElementById('admin-wrap').style.display = 'block';
-    document.getElementById('user-email').textContent = currentUser.email;
-    loadStats();
-    loadPosts();
-  }
-
-  // 통계 로드
-  async function loadStats() {
-    const [posts, votes, reactions, comments] = await Promise.all([
-      sb.from('posts').select('id', { count: 'exact' }),
-      sb.from('votes').select('id', { count: 'exact' }),
-      sb.from('reactions').select('id', { count: 'exact' }),
-      sb.from('comments').select('id', { count: 'exact' }),
-    ]);
-
-    document.getElementById('stat-posts').textContent = posts.count || 0;
-    document.getElementById('stat-votes').textContent = votes.count || 0;
-    document.getElementById('stat-reactions').textContent = reactions.count || 0;
-    document.getElementById('stat-comments').textContent = comments.count || 0;
-  }
-
-  // 영상 목록 로드
-  async function loadPosts() {
-    const { data } = await sb.from('posts').select('*').order('created_at', { ascending: false });
-    const list = document.getElementById('posts-list');
-
-    if (!data || !data.length) {
-      list.innerHTML = '<div class="empty-posts">아직 업로드된 영상이 없어요</div>';
-      return;
-    }
-
-    const catLabel = { hot: '🔥 핫', funny: '😂 웃긴', guess: '❓ 맞춰봐', lab: '🧪 실험실' };
-    list.innerHTML = data.map(post => `
-      <div class="table-row">
-        <div class="post-title-cell">${post.title}</div>
-        <div class="post-category-cell">${catLabel[post.category] || post.category}</div>
-        <div class="post-date-cell">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div>
-        <div><button class="delete-btn" onclick="deletePost('${post.id}', this)">삭제</button></div>
-      </div>
-    `).join('');
-  }
-
-  // 업로드
-  async function uploadPost() {
-    const title = document.getElementById('video-title').value.trim();
-    const category = document.getElementById('video-category').value;
-    const btn = document.getElementById('upload-btn');
-    const successEl = document.getElementById('upload-success');
-    const errorEl = document.getElementById('upload-error');
-
-    successEl.style.display = 'none';
-    errorEl.style.display = 'none';
-
-    if (!title) {
-      errorEl.textContent = '제목은 필수입니다.';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = '업로드 중...';
-
-    try {
-      if (uploadType === 'youtube') {
-        // YouTube 방식
-        const url = document.getElementById('video-url').value.trim();
-        const thumb = document.getElementById('video-thumb').value.trim();
-        if (!url || !getYouTubeId(url)) {
-          errorEl.textContent = '올바른 YouTube URL을 입력해주세요.';
-          errorEl.style.display = 'block';
-          btn.disabled = false; btn.textContent = '업로드';
-          return;
-        }
-        const ytId = getYouTubeId(url);
-        const thumbnailUrl = thumb || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-        const { error } = await sb.from('posts').insert({ title, video_url: url, video_type: 'youtube', thumbnail_url: thumbnailUrl, category });
-        if (error) throw error;
-        document.getElementById('video-url').value = '';
-        document.getElementById('video-thumb').value = '';
-        document.getElementById('yt-preview').style.display = 'none';
-
-      } else {
-        // 파일 직접 업로드 방식
-        const fileInput = document.getElementById('video-file');
-        const file = fileInput.files[0];
-        if (!file) {
-          errorEl.textContent = '파일을 선택해주세요.';
-          errorEl.style.display = 'block';
-          btn.disabled = false; btn.textContent = '업로드';
-          return;
-        }
-
-        // 진행바 표시
-        document.getElementById('progress-wrap').style.display = 'block';
-
-        const ext = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const filePath = `public/${fileName}`;
-
-        // Supabase Storage 업로드
-        const { error: uploadError } = await sb.storage.from('videos').upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-          onUploadProgress: (progress) => {
-            const pct = Math.round(progress.loaded / progress.total * 100);
-            document.getElementById('progress-pct').textContent = pct;
-            document.getElementById('progress-bar').style.width = pct + '%';
-          }
-        });
-        if (uploadError) throw uploadError;
-
-        // 공개 URL 가져오기
-        const { data: { publicUrl } } = sb.storage.from('videos').getPublicUrl(filePath);
-
-        const { error: dbError } = await sb.from('posts').insert({
-          title, video_url: publicUrl, video_type: 'upload',
-          thumbnail_url: '', storage_path: filePath, category
-        });
-        if (dbError) throw dbError;
-
-        document.getElementById('progress-wrap').style.display = 'none';
-        document.getElementById('progress-bar').style.width = '0%';
-        fileInput.value = '';
-        document.getElementById('file-preview').textContent = '';
-      }
-
-      successEl.style.display = 'block';
-      document.getElementById('video-title').value = '';
-      loadPosts();
-      loadStats();
-
-    } catch (err) {
-      errorEl.textContent = '업로드 실패: ' + err.message;
-      errorEl.style.display = 'block';
-      document.getElementById('progress-wrap').style.display = 'none';
-    }
-
-    btn.disabled = false;
-    btn.textContent = '업로드';
-  }
-
-  // 삭제
-  async function deletePost(id, btn) {
-    if (!confirm('정말 삭제하시겠어요?')) return;
-    btn.textContent = '삭제 중...';
-    await sb.from('posts').delete().eq('id', id);
-    loadPosts();
-    loadStats();
-  }
-
-  // 세션 확인
-  async function checkSession() {
+  // ── AUTH ──
+  async function init() {
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
-      const { data: profile } = await sb
-        .from('profiles').select('is_admin').eq('id', session.user.id).single();
+      const { data: profile } = await sb.from('profiles').select('is_admin').eq('id', session.user.id).single();
       if (profile?.is_admin) {
         currentUser = session.user;
         showAdmin();
         return;
+      } else {
+        document.getElementById('auth-msg').innerHTML = '⚠️ 이 계정은 관리자 권한이 없어요.<br>다른 계정으로 로그인해주세요.';
       }
     }
-    document.getElementById('login-wrap').style.display = 'flex';
+    document.getElementById('auth-gate').classList.remove('hide');
   }
 
-  checkSession();
+  async function loginWithGoogle() {
+    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  }
+
+  async function doLogout() {
+    if (!confirm('로그아웃할까요?')) return;
+    await sb.auth.signOut();
+    location.href = 'index.html';
+  }
+
+  function showAdmin() {
+    document.getElementById('auth-gate').classList.add('hide');
+    document.getElementById('admin-wrap').classList.add('show');
+    document.getElementById('user-email').textContent = currentUser.email;
+    loadAll();
+  }
+
+  // ── 데이터 ──
+  async function loadAll() {
+    await Promise.all([loadStats(), loadPosts()]);
+  }
+
+  async function loadStats() {
+    const [posts, votes, reactions, comments] = await Promise.all([
+      sb.from('posts').select('id, post_type, category, body, video_url'),
+      sb.from('votes').select('id', { count: 'exact', head: true }),
+      sb.from('reactions').select('id', { count: 'exact', head: true }),
+      sb.from('comments').select('id', { count: 'exact', head: true }),
+    ]);
+    const allP = posts.data || [];
+    document.getElementById('stat-posts').textContent = allP.length;
+    document.getElementById('stat-votes').textContent = votes.count || 0;
+    document.getElementById('stat-reactions').textContent = reactions.count || 0;
+    document.getElementById('stat-comments').textContent = comments.count || 0;
+    document.getElementById('stat-flick').textContent = allP.filter(p => getPostType(p) === 'flick').length;
+    document.getElementById('stat-guess').textContent = allP.filter(p => getPostType(p) === 'guess').length;
+    document.getElementById('stat-talk').textContent = allP.filter(p => getPostType(p) === 'talk').length;
+  }
+
+  async function loadPosts() {
+    const { data } = await sb.from('posts').select('*').order('created_at', { ascending: false });
+    allPosts = data || [];
+    renderPosts();
+  }
+
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === filter);
+    });
+    renderPosts();
+  }
+
+  function renderPosts() {
+    const list = document.getElementById('posts-list');
+    let posts = allPosts;
+    if (currentFilter !== 'all') posts = posts.filter(p => getPostType(p) === currentFilter);
+
+    if (!posts.length) {
+      list.innerHTML = '<div class="empty-posts">포스트가 없어요</div>';
+      return;
+    }
+    list.innerHTML = posts.map(post => {
+      const type = getPostType(post);
+      const typeLabel = type.toUpperCase();
+      const answer = post.correct_answer
+        ? `<span class="answer-tag ${post.correct_answer}">${post.correct_answer === 'ai' ? 'AI' : 'REAL'}</span>`
+        : '<span style="color:var(--muted);font-size:11px;">—</span>';
+      return `
+        <div class="table-row">
+          <div class="post-title-cell" title="${escapeHtml(post.title || '')}">${escapeHtml(post.title || '')}</div>
+          <div><span class="type-tag ${type}">${typeLabel}</span></div>
+          <div>${answer}</div>
+          <div class="post-date-cell">${new Date(post.created_at).toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit' })}</div>
+          <div><button class="delete-btn" onclick="deletePost('${post.id}', this)">삭제</button></div>
+        </div>`;
+    }).join('');
+  }
+
+  async function deletePost(id, btn) {
+    if (!confirm('정말 삭제할까요? (관련 댓글/투표/리액션 함께 사라짐)')) return;
+    btn.textContent = '삭제 중...';
+    btn.disabled = true;
+    // 관련 데이터도 같이 정리 (FK ON DELETE CASCADE 안 걸려있다면 수동)
+    await Promise.all([
+      sb.from('comments').delete().eq('post_id', id),
+      sb.from('votes').delete().eq('post_id', id),
+      sb.from('reactions').delete().eq('post_id', id),
+    ]);
+    await sb.from('posts').delete().eq('id', id);
+    loadAll();
+  }
+
+  // ── MAKE 폼 ──
+  function setMakeType(type) {
+    makeType = type;
+    document.getElementById('m-tab-video').classList.toggle('active', type === 'video');
+    document.getElementById('m-tab-text').classList.toggle('active', type === 'text');
+    document.getElementById('make-video-section').style.display = type === 'video' ? 'block' : 'none';
+    document.getElementById('make-text-section').style.display = type === 'text' ? 'block' : 'none';
+  }
+
+  function setUploadType(type) {
+    uploadType = type;
+    document.getElementById('u-type-youtube').classList.toggle('active', type === 'youtube');
+    document.getElementById('u-type-file').classList.toggle('active', type === 'file');
+    document.getElementById('u-youtube-section').style.display = type === 'youtube' ? 'block' : 'none';
+    document.getElementById('u-file-section').style.display = type === 'file' ? 'block' : 'none';
+  }
+
+  function toggleGuessAnswer() {
+    const isG = document.getElementById('u-is-guess').checked;
+    document.getElementById('u-guess-answer-row').classList.toggle('show', isG);
+  }
+
+  function previewYoutube(url) {
+    const id = getYouTubeId(url);
+    const preview = document.getElementById('u-yt-preview');
+    const thumb = document.getElementById('u-yt-thumb');
+    if (id) { thumb.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; }
+  }
+
+  function previewFile(input) {
+    const file = input.files[0];
+    const preview = document.getElementById('u-file-preview');
+    if (!file) { preview.textContent = ''; return; }
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    if (file.size > 50 * 1024 * 1024) {
+      preview.innerHTML = '<span style="color:var(--danger)">⚠️ 50MB 초과</span>';
+      input.value = ''; return;
+    }
+    preview.textContent = `✅ ${file.name} (${sizeMB}MB)`;
+  }
+
+  async function submitUpload() {
+    const btn = document.getElementById('upload-btn');
+    const errorEl = document.getElementById('upload-error');
+    const successEl = document.getElementById('upload-success');
+    errorEl.classList.remove('show');
+    successEl.classList.remove('show');
+
+    btn.disabled = true; btn.textContent = '업로드 중...';
+    try {
+      if (makeType === 'text') {
+        const title = document.getElementById('u-talk-title').value.trim();
+        const body = document.getElementById('u-talk-body').value.trim();
+        if (!title) throw new Error('제목을 입력해주세요.');
+        if (!body) throw new Error('본문을 입력해주세요.');
+        const { error } = await sb.from('posts').insert({
+          title, body, post_type: 'talk', category: 'funny',
+        });
+        if (error) throw error;
+        document.getElementById('u-talk-title').value = '';
+        document.getElementById('u-talk-body').value = '';
+      } else {
+        const title = document.getElementById('u-video-title').value.trim();
+        if (!title) throw new Error('제목을 입력해주세요.');
+        const isG = document.getElementById('u-is-guess').checked;
+        const correctAnswer = isG ? document.getElementById('u-guess-answer').value : null;
+        const post_type = isG ? 'guess' : 'flick';
+        const category = isG ? 'guess' : 'funny';
+        const customThumb = document.getElementById('u-thumb').value.trim();
+
+        if (uploadType === 'youtube') {
+          const url = document.getElementById('u-video-url').value.trim();
+          if (!url || !getYouTubeId(url)) throw new Error('올바른 YouTube URL을 입력해주세요.');
+          const ytId = getYouTubeId(url);
+          const thumbnail = customThumb || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+          const { error } = await sb.from('posts').insert({
+            title, video_url: url, video_type: 'youtube',
+            thumbnail_url: thumbnail, category, post_type, correct_answer: correctAnswer,
+          });
+          if (error) throw error;
+          document.getElementById('u-video-url').value = '';
+          document.getElementById('u-yt-preview').style.display = 'none';
+          document.getElementById('u-thumb').value = '';
+        } else {
+          const fileInput = document.getElementById('u-video-file');
+          const file = fileInput.files[0];
+          if (!file) throw new Error('파일을 선택해주세요.');
+          document.getElementById('u-progress-wrap').style.display = 'block';
+          const ext = file.name.split('.').pop();
+          const filePath = `public/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+          const { error: upErr } = await sb.storage.from('videos').upload(filePath, file, { cacheControl: '3600', upsert: false });
+          if (upErr) throw upErr;
+          const { data: { publicUrl } } = sb.storage.from('videos').getPublicUrl(filePath);
+          const { error: dbErr } = await sb.from('posts').insert({
+            title, video_url: publicUrl, video_type: 'upload',
+            thumbnail_url: customThumb || '', storage_path: filePath,
+            category, post_type, correct_answer: correctAnswer,
+          });
+          if (dbErr) throw dbErr;
+          document.getElementById('u-progress-wrap').style.display = 'none';
+          document.getElementById('u-progress-bar').style.width = '0%';
+          fileInput.value = '';
+          document.getElementById('u-file-preview').textContent = '';
+        }
+        document.getElementById('u-video-title').value = '';
+        document.getElementById('u-is-guess').checked = false;
+        toggleGuessAnswer();
+      }
+      successEl.classList.add('show');
+      await loadAll();
+      setTimeout(() => successEl.classList.remove('show'), 3000);
+    } catch (err) {
+      errorEl.textContent = '실패: ' + (err.message || err);
+      errorEl.classList.add('show');
+      document.getElementById('u-progress-wrap').style.display = 'none';
+    }
+    btn.disabled = false; btn.textContent = '올리기';
+  }
+
+  init();
 </script>
 </body>
 </html>
