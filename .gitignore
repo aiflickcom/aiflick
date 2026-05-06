@@ -1,0 +1,13 @@
+# Local backup files
+index-backup.html
+*-backup.html
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Env files (never commit secrets)
+.env
+.env.local
