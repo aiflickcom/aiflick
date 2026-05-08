@@ -885,6 +885,59 @@
       color: var(--text);
       white-space: pre-wrap; word-break: break-word;
     }
+
+    /* 본인/관리자용 수정·삭제 액션 */
+    .modal-actions {
+      display: flex; gap: 8px; justify-content: flex-end;
+      margin: 4px 0 14px;
+    }
+    .modal-actions button {
+      background: transparent; border: 1px solid var(--border2);
+      color: var(--muted2);
+      padding: 5px 12px; border-radius: 16px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+    }
+    .modal-actions .btn-edit:hover {
+      border-color: var(--accent2); color: var(--accent2);
+      box-shadow: 0 0 8px var(--glow2);
+    }
+    .modal-actions .btn-del:hover {
+      border-color: #f87171; color: #f87171;
+      box-shadow: 0 0 8px rgba(248,113,113,0.3);
+    }
+
+    .edit-banner {
+      background: linear-gradient(135deg, rgba(6,182,212,0.12), rgba(168,85,247,0.12));
+      border: 1px solid var(--accent2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 13px; color: var(--text);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+    }
+    .edit-banner .cancel {
+      background: transparent; border: 1px solid var(--border2);
+      color: var(--muted2);
+      padding: 4px 10px; border-radius: 14px;
+      font-size: 11px; cursor: pointer; font-family: inherit;
+    }
+    .edit-banner .cancel:hover { color: var(--text); border-color: var(--text); }
+
+    /* 댓글 삭제 버튼 */
+    .comment-item { position: relative; padding-right: 22px; }
+    .comment-del {
+      position: absolute; top: 0; right: 0;
+      background: transparent; border: none;
+      color: var(--muted); font-size: 14px;
+      cursor: pointer; padding: 0 4px;
+      font-family: inherit;
+      opacity: 0; transition: opacity 0.2s, color 0.2s;
+    }
+    .comment-item:hover .comment-del { opacity: 1; }
+    .comment-del:hover { color: #f87171; }
     .modal-body-text img {
       max-width: 100%; height: auto;
       border-radius: var(--radius-sm);
@@ -1612,12 +1665,105 @@
   function showUploadModal(preselectType) {
     if (!currentUser) { showLoginModal(); return; }
     document.getElementById('upload-modal').classList.add('show');
-    if (preselectType === 'video' || preselectType === 'text') setMakeType(preselectType);
+    if (preselectType === 'video' || preselectType === 'image' || preselectType === 'text') setMakeType(preselectType);
   }
   function closeUploadModal() {
     document.getElementById('upload-modal').classList.remove('show');
     document.getElementById('u-upload-success').style.display = 'none';
     document.getElementById('u-upload-error').style.display = 'none';
+    cancelEditMode();
+  }
+
+  // 수정 모드
+  let editingPostId = null;
+  function canEditPost(post) {
+    if (!currentUser || !post) return false;
+    if (isAdmin) return true;
+    return post.user_id && post.user_id === currentUser.id;
+  }
+  function canDeleteComment(c) {
+    if (!currentUser) return false;
+    if (isAdmin) return true;
+    return c.user_id && c.user_id === currentUser.id;
+  }
+  function startEditPost(id) {
+    const post = allPosts.find(p => p.id === id);
+    if (!post || !canEditPost(post)) return;
+    editingPostId = id;
+    closeModal();
+    const media = getMediaType(post);
+    if (media === 'text') {
+      setMakeType('text');
+      document.getElementById('u-talk-title').value = post.title || '';
+      document.getElementById('u-talk-body').value = post.body || '';
+    } else if (media === 'image') {
+      setMakeType('image');
+      document.getElementById('u-image-title').value = post.title || '';
+      document.getElementById('u-image-body').value = post.body || '';
+    } else {
+      setMakeType('video');
+      document.getElementById('u-video-title').value = post.title || '';
+      document.getElementById('u-video-body').value = post.body || '';
+    }
+    showEditBanner(post);
+    document.getElementById('u-upload-btn').textContent = '수정 저장';
+    document.getElementById('upload-modal').classList.add('show');
+  }
+  function showEditBanner(post) {
+    let banner = document.getElementById('edit-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'edit-banner';
+      banner.className = 'edit-banner';
+      const modalContent = document.querySelector('#upload-modal .login-box');
+      modalContent.insertBefore(banner, modalContent.children[1]);
+    }
+    banner.innerHTML = `
+      <span>✏️ 수정 중 — 제목과 설명만 변경 가능</span>
+      <button class="cancel" onclick="cancelEditMode()">취소</button>`;
+  }
+  function cancelEditMode() {
+    if (!editingPostId) return;
+    editingPostId = null;
+    const banner = document.getElementById('edit-banner');
+    if (banner) banner.remove();
+    document.getElementById('u-upload-btn').textContent = '올리기';
+    const successEl = document.getElementById('u-upload-success');
+    if (successEl) successEl.textContent = '✅ 올렸어요! 잠시 후 표시돼요.';
+    // 입력값 초기화
+    ['u-video-title','u-video-body','u-image-title','u-image-body','u-talk-title','u-talk-body'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+  }
+
+  async function deletePostFromModal(id) {
+    if (!confirm('정말 삭제할까요?\n관련 댓글/투표/리액션도 같이 삭제됩니다.')) return;
+    try {
+      await Promise.all([
+        sb.from('comments').delete().eq('post_id', id),
+        sb.from('votes').delete().eq('post_id', id),
+        sb.from('reactions').delete().eq('post_id', id),
+      ]);
+      const { error } = await sb.from('posts').delete().eq('id', id);
+      if (error) throw error;
+      closeModal();
+      await loadAll();
+      rerenderCurrent();
+    } catch (err) {
+      alert('삭제 실패: ' + (err.message || err));
+    }
+  }
+
+  async function deleteCommentFromModal(commentId, postId) {
+    if (!confirm('이 댓글을 삭제할까요?')) return;
+    try {
+      const { error } = await sb.from('comments').delete().eq('id', commentId);
+      if (error) throw error;
+      // 모달 다시 로드해서 댓글 갱신
+      openModal(postId);
+    } catch (err) {
+      alert('삭제 실패: ' + (err.message || err));
+    }
   }
 
   // ── MAKE 모달 — 영상/사진/글 토글 ──
@@ -1761,6 +1907,40 @@
     const errorEl = document.getElementById('u-upload-error');
     const successEl = document.getElementById('u-upload-success');
     errorEl.style.display = 'none'; successEl.style.display = 'none';
+
+    // 수정 모드 — 제목/본문만 갱신하고 종료
+    if (editingPostId) {
+      btn.disabled = true; btn.textContent = '저장 중...';
+      try {
+        let title, body;
+        if (makeType === 'text') {
+          title = document.getElementById('u-talk-title').value.trim();
+          body = document.getElementById('u-talk-body').value.trim();
+          if (!title) throw new Error('제목을 입력해주세요.');
+          if (!body) throw new Error('본문을 입력해주세요.');
+        } else if (makeType === 'image') {
+          title = document.getElementById('u-image-title').value.trim();
+          body = document.getElementById('u-image-body').value.trim() || null;
+          if (!title) throw new Error('제목을 입력해주세요.');
+        } else {
+          title = document.getElementById('u-video-title').value.trim();
+          body = document.getElementById('u-video-body').value.trim() || null;
+          if (!title) throw new Error('제목을 입력해주세요.');
+        }
+        const { error } = await sb.from('posts').update({ title, body }).eq('id', editingPostId);
+        if (error) throw error;
+        successEl.textContent = '✅ 수정됐어요';
+        successEl.style.display = 'block';
+        await loadAll();
+        rerenderCurrent();
+        setTimeout(() => closeUploadModal(), 1200);
+      } catch (err) {
+        errorEl.textContent = '수정 실패: ' + (err.message || err);
+        errorEl.style.display = 'block';
+      }
+      btn.disabled = false; btn.textContent = '수정 저장';
+      return;
+    }
 
     btn.disabled = true; btn.textContent = '업로드 중...';
     try {
@@ -2655,16 +2835,32 @@
       ? `<div class="modal-body-text">${renderBodyMarkdown(post.body)}</div>`
       : '';
 
+    // 본인/관리자용 수정·삭제 액션
+    const ownerActions = canEditPost(post) ? `
+      <div class="modal-actions">
+        <button class="btn-edit" onclick="startEditPost('${post.id}')">✏️ 수정</button>
+        <button class="btn-del" onclick="deletePostFromModal('${post.id}')">🗑 삭제</button>
+      </div>` : '';
+
+    // 댓글 렌더 (소유자/관리자에게 × 버튼)
+    const commentsHTML = (comments||[]).length
+      ? (comments||[]).map(c => {
+          const delBtn = canDeleteComment(c)
+            ? `<button class="comment-del" onclick="deleteCommentFromModal('${c.id}','${postId}')" title="삭제">×</button>`
+            : '';
+          return `<div class="comment-item" style="margin-bottom:8px"><span class="nickname">${escapeHtml(c.nickname || '')}</span>${escapeHtml(c.content || '')}${delBtn}</div>`;
+        }).join('')
+      : '<p style="color:var(--muted);font-size:13px">첫 댓글을 남겨보세요!</p>';
+
     document.getElementById('modal-body').innerHTML = `
       ${mediaHTML}
       ${bodyHTML}
+      ${ownerActions}
       <div class="reaction-bar" style="margin-top:14px">
         ${reactionTypes.map(r => { const cnt=(reactions||[]).filter(rx=>rx.type===r.type).length; return `<button class="reaction-btn" onclick="modalReact('${postId}','${r.type}',this)">${r.emoji} <span>${cnt}</span></button>`; }).join('')}
       </div>
       <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--muted2);margin-top:6px">💬 댓글 ${(comments||[]).length}개</div>
-      <div id="modal-comments" style="margin-bottom:12px">
-        ${(comments||[]).map(c=>`<div class="comment-item" style="margin-bottom:8px"><span class="nickname">${escapeHtml(c.nickname || '')}</span>${escapeHtml(c.content || '')}</div>`).join('') || '<p style="color:var(--muted);font-size:13px">첫 댓글을 남겨보세요!</p>'}
-      </div>
+      <div id="modal-comments" style="margin-bottom:12px">${commentsHTML}</div>
       ${currentUser
         ? `<div class="comment-input-wrap"><input class="comment-input" type="text" placeholder="댓글 남기기..." id="mci" maxlength="200" onkeydown="if(event.key==='Enter')submitModalComment('${postId}')"><button class="comment-submit" onclick="submitModalComment('${postId}')">등록</button></div>`
         : `<div class="login-prompt-inline" onclick="showLoginModal()">댓글 작성은 로그인 후 가능해요</div>`}`;
