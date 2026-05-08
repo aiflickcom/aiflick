@@ -185,8 +185,9 @@
       font-size: 13px; font-weight: 700;
       letter-spacing: 0.5px;
       color: var(--muted2);
+      text-transform: none;
     }
-    .bc-mode .expand .initial { color: var(--text); }
+    .bc-mode .expand .initial { color: var(--text); text-transform: none; }
     .bc-mode .expand .dot { color: var(--border2); margin: 0 5px; }
 
     .header-right { display: flex; align-items: center; gap: 10px; }
@@ -211,7 +212,10 @@
       background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(6,182,212,0.2));
       border-color: var(--accent);
       color: var(--text);
-      font-weight: 700;
+      font-weight: 600;
+      padding: 5px 16px;
+      letter-spacing: 0.5px;
+      gap: 4px;
     }
     .make-btn:hover {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
