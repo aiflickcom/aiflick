@@ -1076,7 +1076,7 @@
       <button class="msg-tab-btn active" data-tab="share" onclick="setMsgTab('share')">Share</button>
       <button class="msg-tab-btn" data-tab="guess" onclick="setMsgTab('guess')">Guess</button>
     </div>
-    <div class="msg-meta" id="msg-meta">make · share · guess</div>
+    <button class="login-btn make-btn" onclick="showUploadModal()">+ Make</button>
   </div>
 </header>
 
@@ -1279,8 +1279,8 @@
     if (currentMode === 'flick') {
       modeLink = `<button class="login-btn mode-link" onclick="enterMode('msg')">MSG →</button>`;
     } else if (currentMode === 'msg') {
-      // Make 버튼은 항상 보이게 — 클릭 시 로그인 안 됐으면 로그인 모달 띄움
-      modeLink = `<button class="login-btn make-btn" onclick="showUploadModal()">+ Make</button>`;
+      // MSG에선 Make는 서브헤더로 옮김 → 우측 상단엔 FLICK 돌아가기 링크
+      modeLink = `<button class="login-btn mode-link" onclick="enterMode('flick')">← FLICK</button>`;
     } else if (currentMode === 'me') {
       modeLink = `<button class="login-btn mode-link" onclick="enterMode('msg')">MSG →</button>`;
     }
@@ -1545,9 +1545,6 @@
     document.querySelectorAll('.msg-tab-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.tab === tab);
     });
-    document.getElementById('msg-meta').textContent = tab === 'guess'
-      ? 'Real or AI?'
-      : 'make · share · guess';
     if (tab === 'share') renderShare();
     else renderGuess();
   }
