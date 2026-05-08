@@ -1075,6 +1075,7 @@
     <div class="msg-tabs">
       <button class="msg-tab-btn active" data-tab="share" onclick="setMsgTab('share')">Share</button>
       <button class="msg-tab-btn" data-tab="guess" onclick="setMsgTab('guess')">Guess</button>
+      <button class="msg-tab-btn" data-tab="talk" onclick="setMsgTab('talk')">Talk</button>
     </div>
     <div class="msg-meta" id="msg-meta">make · share · guess</div>
   </div>
@@ -1311,9 +1312,10 @@
   async function doLogout() { await sb.auth.signOut(); document.getElementById('user-menu').classList.remove('show'); }
   function showLoginModal() { document.getElementById('login-modal').classList.add('show'); }
   function closeLoginModal() { document.getElementById('login-modal').classList.remove('show'); }
-  function showUploadModal() {
+  function showUploadModal(preselectType) {
     if (!currentUser) { showLoginModal(); return; }
     document.getElementById('upload-modal').classList.add('show');
+    if (preselectType === 'video' || preselectType === 'text') setMakeType(preselectType);
   }
   function closeUploadModal() {
     document.getElementById('upload-modal').classList.remove('show');
@@ -1512,18 +1514,23 @@
     document.querySelectorAll('.msg-tab-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.tab === tab);
     });
-    document.getElementById('msg-meta').textContent = tab === 'guess'
-      ? 'Real or AI?'
-      : 'make · share · guess';
+    const metaText = {
+      share: 'make · share · guess',
+      guess: 'Real or AI?',
+      talk: 'tips · prompts · discussion',
+    };
+    document.getElementById('msg-meta').textContent = metaText[tab] || 'make · share · guess';
     if (tab === 'share') renderShare();
-    else renderGuess();
+    else if (tab === 'guess') renderGuess();
+    else if (tab === 'talk') renderTalk();
   }
 
   function rerenderCurrent() {
     if (currentMode === 'flick') renderFlick();
     else if (currentMode === 'msg') {
       if (currentMsgTab === 'share') renderShare();
-      else renderGuess();
+      else if (currentMsgTab === 'guess') renderGuess();
+      else if (currentMsgTab === 'talk') renderTalk();
     } else if (currentMode === 'me') renderMe();
   }
 
@@ -1794,6 +1801,17 @@
     const posts = allPosts.filter(isGuess);
     if (!posts.length) {
       container.innerHTML = `<div class="empty-state"><div class="emoji">❓</div><h3>Guess 모드 영상이 없어요</h3><p>업로드 시 <strong>Guess 모드</strong> 토글을 켜면 여기 표시됩니다.<br><button class="login-btn make-btn" style="margin-top:16px" onclick="showUploadModal()">+ Make Guess</button></p></div>`;
+      return;
+    }
+    container.innerHTML = `<div class="grid">${posts.map(renderPostCard).join('')}</div>`;
+  }
+
+  // ── MSG / TALK 렌더 (글만) ──
+  function renderTalk() {
+    const container = document.getElementById('msg-container');
+    const posts = allPosts.filter(isTalk);
+    if (!posts.length) {
+      container.innerHTML = `<div class="empty-state"><div class="emoji">📝</div><h3>아직 글이 없어요</h3><p>프롬프트, 워크플로우, 후기, 토론거리 — 영상 만들기 부담스러워도 글은 환영.<br><button class="login-btn make-btn" style="margin-top:16px" onclick="showUploadModal('text')">+ Make Talk</button></p></div>`;
       return;
     }
     container.innerHTML = `<div class="grid">${posts.map(renderPostCard).join('')}</div>`;
