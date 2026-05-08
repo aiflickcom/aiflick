@@ -465,6 +465,90 @@
     #msg-wrap { display: none; padding-top: 110px; min-height: 100vh; position: relative; z-index: 1; }
     #msg-wrap.active { display: block; }
 
+    /* ── GUESS HUB (게임 점수 카드) ── */
+    .guess-hub {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+      gap: 28px;
+      align-items: center;
+      position: relative; overflow: hidden;
+    }
+    .guess-hub::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(168,85,247,0.06), rgba(6,182,212,0.04));
+      pointer-events: none;
+    }
+    .guess-hub-stat { position: relative; text-align: center; min-width: 80px; }
+    .guess-hub-stat .num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 38px; font-weight: 900; letter-spacing: 1px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .guess-hub-stat .lbl {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px; color: var(--muted2);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-top: 8px; font-weight: 700;
+    }
+    .guess-hub-stat .sub {
+      font-size: 11px; color: var(--muted);
+      margin-top: 4px; font-family: monospace;
+    }
+    .guess-hub-tagline {
+      position: relative;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: 3px;
+      color: var(--text);
+      text-align: right;
+      text-transform: uppercase;
+    }
+    .guess-hub-tagline .accent {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .guess-hub-tagline .sub {
+      display: block; font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; font-weight: 500; color: var(--muted);
+      letter-spacing: 0.5px; text-transform: none;
+      margin-top: 4px;
+    }
+    .guess-hub-cta {
+      grid-template-columns: 1fr;
+      cursor: pointer;
+      text-align: center;
+      padding: 18px;
+      border-style: dashed;
+      border-color: var(--border2);
+      transition: all 0.2s;
+    }
+    .guess-hub-cta:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 14px rgba(168,85,247,0.15);
+    }
+    .guess-hub-cta-msg {
+      position: relative;
+      font-size: 13px; color: var(--muted2);
+    }
+    .guess-hub-cta-msg strong {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700; letter-spacing: 2px;
+      color: var(--text);
+      margin-right: 8px;
+    }
+    @media (max-width: 540px) {
+      .guess-hub { grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; }
+      .guess-hub-tagline { display: none; }
+      .guess-hub-stat .num { font-size: 30px; }
+    }
+
     /* ── ME MODE ── */
     #me-wrap { display: none; padding-top: 80px; min-height: 100vh; position: relative; z-index: 1; }
     #me-wrap.active { display: block; }
@@ -1836,15 +1920,93 @@
     container.innerHTML = `<div class="grid">${posts.map(renderPostCard).join('')}</div>`;
   }
 
-  // ── MSG / GUESS 렌더 (Guess만) ──
-  function renderGuess() {
+  // 사용자의 Guess 게임 스탯 (정답률 / 스트릭) 계산
+  async function loadGuessStats() {
+    if (!currentUser) return null;
+    try {
+      const { data: myVotes } = await sb.from('votes')
+        .select('id, vote_type, post_id, created_at')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      if (!myVotes || !myVotes.length) return { total: 0, correct: 0, accuracy: 0, streak: 0 };
+
+      // 투표한 포스트들의 correct_answer 수집
+      const postIds = [...new Set(myVotes.map(v => v.post_id))];
+      const { data: posts } = await sb.from('posts')
+        .select('id, correct_answer')
+        .in('id', postIds);
+      const ansMap = new Map((posts || []).map(p => [p.id, p.correct_answer]));
+
+      let total = 0, correct = 0, streak = 0, streakActive = true;
+      for (const v of myVotes) {
+        const ans = ansMap.get(v.post_id);
+        if (!ans) continue; // 정답 미공개 영상은 카운트 제외
+        total++;
+        const isCorrect = v.vote_type === ans;
+        if (isCorrect) correct++;
+        if (streakActive) {
+          if (isCorrect) streak++;
+          else streakActive = false;
+        }
+      }
+      const accuracy = total ? Math.round(correct / total * 100) : 0;
+      return { total, correct, accuracy, streak };
+    } catch (err) {
+      console.warn('loadGuessStats failed:', err);
+      return null;
+    }
+  }
+
+  function renderGuessHub(stats) {
+    if (!currentUser) {
+      return `<div class="guess-hub guess-hub-cta" onclick="showLoginModal()">
+        <div class="guess-hub-cta-msg"><strong>REAL or AI?</strong>로그인하면 정답률 / 스트릭 추적</div>
+      </div>`;
+    }
+    if (!stats || stats.total === 0) {
+      return `<div class="guess-hub">
+        <div class="guess-hub-stat">
+          <div class="num">—</div>
+          <div class="lbl">정답률</div>
+          <div class="sub">아직 0회</div>
+        </div>
+        <div class="guess-hub-stat">
+          <div class="num">0</div>
+          <div class="lbl">스트릭</div>
+          <div class="sub">첫 정답 노려라</div>
+        </div>
+        <div class="guess-hub-tagline"><span class="accent">REAL</span> or <span class="accent">AI</span>?<span class="sub">당신의 눈을 시험하세요</span></div>
+      </div>`;
+    }
+    return `<div class="guess-hub">
+      <div class="guess-hub-stat">
+        <div class="num">${stats.accuracy}%</div>
+        <div class="lbl">정답률</div>
+        <div class="sub">${stats.correct} / ${stats.total}</div>
+      </div>
+      <div class="guess-hub-stat">
+        <div class="num">${stats.streak}</div>
+        <div class="lbl">스트릭</div>
+        <div class="sub">${stats.streak > 0 ? '🔥 연속 정답' : '다시 도전'}</div>
+      </div>
+      <div class="guess-hub-tagline"><span class="accent">REAL</span> or <span class="accent">AI</span>?<span class="sub">당신의 눈을 시험하세요</span></div>
+    </div>`;
+  }
+
+  // ── MSG / GUESS 렌더 (Guess만 + Game Hub) ──
+  async function renderGuess() {
     const container = document.getElementById('msg-container');
     const posts = allPosts.filter(isGuess);
+    container.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+
+    const stats = await loadGuessStats();
+    const hubHTML = renderGuessHub(stats);
+
     if (!posts.length) {
-      container.innerHTML = `<div class="empty-state"><div class="emoji">❓</div><h3>Guess 모드 영상이 없어요</h3><p>업로드 시 <strong>Guess 모드</strong> 토글을 켜면 여기 표시됩니다.<br><button class="login-btn make-btn" style="margin-top:16px" onclick="showUploadModal()">+ Make Guess</button></p></div>`;
+      container.innerHTML = hubHTML + `<div class="empty-state"><div class="emoji">❓</div><h3>Guess 영상이 없어요</h3><p>업로드 시 <strong>Guess 모드</strong> 토글을 켜면 여기 표시됩니다.<br><button class="login-btn make-btn" style="margin-top:16px" onclick="showUploadModal()">+ Make Guess</button></p></div>`;
       return;
     }
-    container.innerHTML = `<div class="grid">${posts.map(renderPostCard).join('')}</div>`;
+    container.innerHTML = hubHTML + `<div class="grid">${posts.map(renderPostCard).join('')}</div>`;
   }
 
   // ── ME / My Page 렌더 ──
