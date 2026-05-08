@@ -1363,6 +1363,31 @@
     preview.textContent = `✅ ${file.name} (${sizeMB}MB)`;
   }
 
+  // 스키마에 칼럼 없으면 자동으로 빼고 재시도
+  async function safePostInsert(payload) {
+    const tryInsert = async (p) => sb.from('posts').insert(p);
+    let { error } = await tryInsert(payload);
+    if (!error) return { error: null };
+    const msg = (error.message || '').toLowerCase();
+    // user_id 칼럼 없음
+    if (msg.includes("'user_id'") || msg.includes('user_id column')) {
+      const { user_id, ...rest } = payload;
+      ({ error } = await tryInsert(rest));
+      if (!error) return { error: null, warning: 'user_id 칼럼 없음 — 마이페이지 추적 안 됨. SQL 마이그레이션 필요.' };
+    }
+    // post_type / body / correct_answer 도 같이 폴백
+    if (error && (msg.includes("'post_type'") || msg.includes("'correct_answer'") || msg.includes("'body'"))) {
+      const { user_id, post_type, correct_answer, body, ...legacy } = payload;
+      // body가 있고 video_url이 없으면 talk 글이라 → legacy 스키마에선 영상 없는 글 저장 불가
+      if (!legacy.video_url && payload.body) {
+        return { error: { message: 'post_type/body 칼럼이 없어 글 저장 불가. SQL 마이그레이션 필요.' } };
+      }
+      ({ error } = await tryInsert(legacy));
+      if (!error) return { error: null, warning: 'Phase 1/2 칼럼이 없어 일부 정보 누락. SQL 마이그레이션 필요.' };
+    }
+    return { error };
+  }
+
   async function submitUserUpload() {
     if (!currentUser) { showLoginModal(); return; }
     const btn = document.getElementById('u-upload-btn');
@@ -1377,13 +1402,14 @@
         const body = document.getElementById('u-talk-body').value.trim();
         if (!title) throw new Error('제목을 입력해주세요.');
         if (!body) throw new Error('본문을 입력해주세요.');
-        const { error } = await sb.from('posts').insert({
+        const res = await safePostInsert({
           title, body,
           post_type: 'talk',
           category: 'funny',
           user_id: currentUser.id,
         });
-        if (error) throw error;
+        if (res.error) throw res.error;
+        if (res.warning) console.warn(res.warning);
         document.getElementById('u-talk-title').value = '';
         document.getElementById('u-talk-body').value = '';
       } else {
@@ -1398,13 +1424,14 @@
           const url = document.getElementById('u-video-url').value.trim();
           if (!url || !getYouTubeId(url)) throw new Error('올바른 YouTube URL을 입력해주세요.');
           const ytId = getYouTubeId(url);
-          const { error } = await sb.from('posts').insert({
+          const res = await safePostInsert({
             title, video_url: url, video_type: 'youtube',
             thumbnail_url: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
             category, post_type, correct_answer: correctAnswer,
             user_id: currentUser.id,
           });
-          if (error) throw error;
+          if (res.error) throw res.error;
+          if (res.warning) console.warn(res.warning);
           document.getElementById('u-video-url').value = '';
           document.getElementById('u-yt-preview').style.display = 'none';
         } else {
@@ -1417,13 +1444,14 @@
           const { error: upErr } = await sb.storage.from('videos').upload(filePath, file, { cacheControl: '3600', upsert: false });
           if (upErr) throw upErr;
           const { data: { publicUrl } } = sb.storage.from('videos').getPublicUrl(filePath);
-          const { error: dbErr } = await sb.from('posts').insert({
+          const res = await safePostInsert({
             title, video_url: publicUrl, video_type: 'upload',
             thumbnail_url: '', storage_path: filePath,
             category, post_type, correct_answer: correctAnswer,
             user_id: currentUser.id,
           });
-          if (dbErr) throw dbErr;
+          if (res.error) throw res.error;
+          if (res.warning) console.warn(res.warning);
           document.getElementById('u-progress-wrap').style.display = 'none';
           fileInput.value = '';
           document.getElementById('u-file-preview').textContent = '';
