@@ -2321,7 +2321,6 @@
       mediaHTML = `<div class="talk-body-md">${escapeHtml(post.body || '')}</div>`;
     } else if (isImage(post)) {
       mediaHTML = `<div class="modal-image"><img src="${escapeHtml(post.video_url)}" alt="${escapeHtml(post.title || '')}"></div>`;
-      // Guess 영상 투표 섹션은 아래에서 type === 'guess'면 추가됨
     } else {
       if (isDirectVideo(post.video_url)) {
         mediaHTML = `<div class="modal-video"><video src="${escapeHtml(post.video_url)}" controls autoplay playsinline></video></div>`;
@@ -2337,37 +2336,37 @@
       } else {
         mediaHTML = `<div class="modal-video" style="display:flex;align-items:center;justify-content:center;color:var(--muted);">영상 URL을 인식할 수 없어요</div>`;
       }
-      // Guess 영상이면 투표 섹션
-      if (type === 'guess') {
-        const aiV = (votes||[]).filter(v=>v.vote_type==='ai').length;
-        const realV = (votes||[]).filter(v=>v.vote_type==='real').length;
-        const total = aiV + realV;
-        const aiPct = total ? Math.round(aiV/total*100) : 50;
-        const realPct = total ? 100 - aiPct : 50;
-        const myVote = (votes||[]).find(v=>v.voter_id===getVoterId());
-        const showStats = !!myVote || total > 0;
-        mediaHTML += `
-          <div class="modal-vote">
-            <div class="modal-vote-label">REAL or AI?</div>
-            ${currentUser ? `
-              <div class="modal-vote-buttons">
-                <button class="modal-vote-btn real ${myVote?.vote_type==='real'?'voted':''}" onclick="modalVote('${post.id}','real',this)">진짜</button>
-                <button class="modal-vote-btn ai ${myVote?.vote_type==='ai'?'voted':''}" onclick="modalVote('${post.id}','ai',this)">AI</button>
-              </div>
-            ` : `<div class="login-prompt-inline" onclick="showLoginModal()" style="margin-bottom:0">🔒 로그인하면 투표 가능</div>`}
-            <div class="modal-vote-stats ${showStats ? 'show' : ''}" id="mvs-${post.id}">
-              <div class="modal-vote-bar">
-                <div class="real" style="width:${realPct}%"></div>
-                <div class="ai" style="width:${aiPct}%"></div>
-              </div>
-              <div class="modal-vote-counts">
-                <span class="real">진짜 ${realPct}% (${realV})</span>
-                <span class="ai">AI ${aiPct}% (${aiV})</span>
-              </div>
-              ${post.correct_answer && myVote ? `<div style="margin-top:8px;text-align:center;font-size:12px;color:var(--muted2);">정답: <strong style="color:#34d399;">${post.correct_answer === 'ai' ? 'AI' : 'REAL'}</strong></div>` : ''}
+    }
+    // Guess이면 영상/사진 둘 다 투표 섹션 표시
+    if (type === 'guess') {
+      const aiV = (votes||[]).filter(v=>v.vote_type==='ai').length;
+      const realV = (votes||[]).filter(v=>v.vote_type==='real').length;
+      const total = aiV + realV;
+      const aiPct = total ? Math.round(aiV/total*100) : 50;
+      const realPct = total ? 100 - aiPct : 50;
+      const myVote = (votes||[]).find(v=>v.voter_id===getVoterId());
+      const showStats = !!myVote || total > 0;
+      mediaHTML += `
+        <div class="modal-vote">
+          <div class="modal-vote-label">REAL or AI?</div>
+          ${currentUser ? `
+            <div class="modal-vote-buttons">
+              <button class="modal-vote-btn real ${myVote?.vote_type==='real'?'voted':''}" onclick="modalVote('${post.id}','real',this)">진짜</button>
+              <button class="modal-vote-btn ai ${myVote?.vote_type==='ai'?'voted':''}" onclick="modalVote('${post.id}','ai',this)">AI</button>
             </div>
-          </div>`;
-      }
+          ` : `<div class="login-prompt-inline" onclick="showLoginModal()" style="margin-bottom:0">🔒 로그인하면 투표 가능</div>`}
+          <div class="modal-vote-stats ${showStats ? 'show' : ''}" id="mvs-${post.id}">
+            <div class="modal-vote-bar">
+              <div class="real" style="width:${realPct}%"></div>
+              <div class="ai" style="width:${aiPct}%"></div>
+            </div>
+            <div class="modal-vote-counts">
+              <span class="real">진짜 ${realPct}% (${realV})</span>
+              <span class="ai">AI ${aiPct}% (${aiV})</span>
+            </div>
+            ${post.correct_answer && myVote ? `<div style="margin-top:8px;text-align:center;font-size:12px;color:var(--muted2);">정답: <strong style="color:#34d399;">${post.correct_answer === 'ai' ? 'AI' : 'REAL'}</strong></div>` : ''}
+          </div>
+        </div>`;
     }
 
     const reactionTypes = [{type:'hot',emoji:'🔥'},{type:'funny',emoji:'😂'},{type:'wow',emoji:'🤯'},{type:'like',emoji:'👍'}];
