@@ -2291,6 +2291,11 @@
         if (entry.isIntersecting) {
           if (!item.querySelector('iframe, video')) {
             const placeholder = item.querySelector('.short-video-placeholder');
+            // 안전: 진입 직전에 잔존 컨트롤이 있으면 먼저 제거
+            const stalCtrl = item.querySelector('.video-controls');
+            if (stalCtrl) stalCtrl.remove();
+            const stalTap = item.querySelector('.video-tap-area');
+            if (stalTap) stalTap.remove();
             if (isDirectVideo(url)) {
               const v = document.createElement('video');
               v.src = url; v.autoplay = true; v.playsInline = true;
@@ -2360,6 +2365,11 @@
             item.prepend(ph);
           }
           if (video) { video.pause(); video.src = ''; video.remove(); }
+          // 커스텀 컨트롤 / tap-area 잔존 제거 (안 그러면 ID 중복으로 동작 안 함)
+          const oldCtrl = item.querySelector('.video-controls');
+          if (oldCtrl) oldCtrl.remove();
+          const oldTap = item.querySelector('.video-tap-area');
+          if (oldTap) oldTap.remove();
         }
       });
     }, { threshold: 0.7 });
