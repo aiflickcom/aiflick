@@ -686,6 +686,98 @@
       gap: 18px;
     }
 
+    /* 보기 토글 + 검색 */
+    .share-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .share-search {
+      flex: 1; min-width: 180px; max-width: 360px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 14px;
+      color: var(--text); font-size: 13px;
+      font-family: inherit; outline: none;
+      transition: all 0.2s;
+    }
+    .share-search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(168,85,247,0.18);
+    }
+    .share-search::placeholder { color: var(--muted); }
+    .view-toggle { display: flex; gap: 2px; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+    .view-toggle button {
+      background: transparent; border: none; cursor: pointer;
+      color: var(--muted); padding: 5px 10px; border-radius: 6px;
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .view-toggle button:hover { color: var(--text); }
+    .view-toggle button.active {
+      background: linear-gradient(135deg, rgba(168,85,247,0.25), rgba(6,182,212,0.25));
+      color: var(--text);
+    }
+    .view-toggle button svg { width: 14px; height: 14px; }
+
+    /* 리스트 (게시판) 뷰 */
+    .board-list {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .board-head, .board-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 90px 80px 60px 40px;
+      align-items: center; gap: 10px;
+      padding: 10px 16px;
+      font-size: 12px;
+    }
+    .board-head {
+      background: var(--card2);
+      font-family: 'Orbitron', sans-serif;
+      color: var(--muted);
+      font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .board-row {
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 13px;
+    }
+    .board-row:hover { background: var(--card2); }
+    .board-row .b-tag {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+      padding: 3px 7px; border-radius: 4px;
+      text-align: center;
+    }
+    .board-row .b-tag.flick { background: rgba(255,255,255,0.06); color: var(--muted2); }
+    .board-row .b-tag.guess { background: rgba(6,182,212,0.15); color: var(--accent2); }
+    .board-row .b-tag.image { background: rgba(245,158,11,0.15); color: var(--accent3); }
+    .board-row .b-tag.image-guess { background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(6,182,212,0.2)); color: #f0c97a; }
+    .board-row .b-tag.talk { background: rgba(168,85,247,0.15); color: #c084fc; }
+    .board-row .b-title {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      color: var(--text); font-weight: 500;
+    }
+    .board-row:hover .b-title { color: #c084fc; }
+    .board-row .b-meta {
+      font-family: 'Space Grotesk', monospace;
+      color: var(--muted); font-size: 11px;
+    }
+    @media (max-width: 720px) {
+      .board-head, .board-row {
+        grid-template-columns: 50px 1fr 70px 36px;
+        font-size: 12px; padding: 9px 12px;
+      }
+      .board-head .b-date, .board-head .b-views,
+      .board-row .b-date, .board-row .b-views { display: none; }
+    }
+
     .post-card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -779,6 +871,26 @@
       overflow: hidden;
     }
     .post-card.talk .post-body { padding: 12px 18px 14px; gap: 6px; border-top: 1px solid var(--border); }
+
+    .post-body-preview {
+      font-size: 12px; color: var(--muted2);
+      line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .modal-body-text {
+      margin: 4px 0 16px;
+      font-size: 14px; line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .modal-body-text img {
+      max-width: 100%; height: auto;
+      border-radius: var(--radius-sm);
+      margin: 8px 0;
+      border: 1px solid var(--border);
+    }
 
     /* ── MODALS ── */
     .post-modal, .login-modal {
@@ -971,6 +1083,12 @@
     .talk-body-md {
       font-size: 14px; line-height: 1.7; color: var(--text);
       white-space: pre-wrap; word-break: break-word;
+    }
+    .talk-body-md img {
+      max-width: 100%; height: auto;
+      border-radius: var(--radius-sm);
+      margin: 8px 0;
+      border: 1px solid var(--border);
     }
 
     /* ── 로그인 모달 ── */
@@ -1271,6 +1389,10 @@
         <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">제목 *</label>
         <input class="comment-input" type="text" id="u-video-title" placeholder="영상 제목을 입력하세요" style="width:100%;">
       </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">설명 (선택)</label>
+        <textarea class="talk-body-input" id="u-video-body" placeholder="프롬프트 / 만든 과정 / 한마디..." style="min-height:90px;"></textarea>
+      </div>
     </div>
 
     <!-- 사진 섹션 -->
@@ -1301,6 +1423,10 @@
         <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">제목 *</label>
         <input class="comment-input" type="text" id="u-image-title" placeholder="이미지 제목을 입력하세요" style="width:100%;">
       </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">설명 (선택)</label>
+        <textarea class="talk-body-input" id="u-image-body" placeholder="프롬프트 / 사용한 도구 / 한마디..." style="min-height:90px;"></textarea>
+      </div>
     </div>
 
     <!-- 글 섹션 -->
@@ -1309,9 +1435,14 @@
         <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">제목 *</label>
         <input class="comment-input" type="text" id="u-talk-title" placeholder="글 제목을 입력하세요" style="width:100%;">
       </div>
-      <div style="margin-bottom:14px;">
-        <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">본문 *</label>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:12px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;">본문 * <span style="color:var(--muted);font-weight:400;">— 본문에 이미지 마크다운 가능: <code style="background:var(--card2);padding:1px 5px;border-radius:3px;font-family:monospace;">![](URL)</code></span></label>
         <textarea class="talk-body-input" id="u-talk-body" placeholder="프롬프트, 워크플로우, 후기, 토론거리..."></textarea>
+      </div>
+      <div style="margin-bottom:14px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+        <button type="button" class="upload-type-btn" onclick="document.getElementById('u-talk-img-file').click()" style="font-size:12px;">📁 이미지 첨부 (자동 삽입)</button>
+        <input type="file" id="u-talk-img-file" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="attachImageToTalk(this)">
+        <span id="u-talk-img-status" style="font-size:11px;color:var(--muted);"></span>
       </div>
     </div>
 
@@ -1404,6 +1535,22 @@
 
   function escapeHtml(s) {
     return (s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  // 간단한 마크다운 — 이미지(![](url))만 렌더, 나머지는 안전하게 escape + 줄바꿈 보존
+  function renderBodyMarkdown(body) {
+    if (!body) return '';
+    let html = escapeHtml(body);
+    // ![alt](url) → <img>
+    html = html.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, (m, alt, url) => {
+      return `<img src="${url}" alt="${alt}" loading="lazy">`;
+    });
+    return html;
+  }
+  // 카드 미리보기용 — 마크다운 이미지 제거, 평문 발췌
+  function bodyPreview(body, max = 120) {
+    if (!body) return '';
+    return body.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
   }
 
   // ── 인증 ──
@@ -1545,6 +1692,38 @@
     preview.textContent = `✅ ${file.name} (${sizeMB}MB)`;
   }
 
+  // Talk 본문에 이미지 첨부 — 업로드 후 마크다운 형태로 textarea에 삽입
+  async function attachImageToTalk(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const status = document.getElementById('u-talk-img-status');
+    if (file.size > 10 * 1024 * 1024) { status.innerHTML = '<span style="color:#f87171">⚠️ 10MB 초과</span>'; input.value = ''; return; }
+    status.textContent = '⏳ 업로드 중...';
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `public/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      let bucket = 'images';
+      let upErr;
+      ({ error: upErr } = await sb.storage.from(bucket).upload(filePath, file, { cacheControl: '3600', upsert: false }));
+      if (upErr) {
+        bucket = 'videos';
+        ({ error: upErr } = await sb.storage.from(bucket).upload(filePath, file, { cacheControl: '3600', upsert: false }));
+      }
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = sb.storage.from(bucket).getPublicUrl(filePath);
+      const ta = document.getElementById('u-talk-body');
+      const md = `\n![](${publicUrl})\n`;
+      const start = ta.selectionStart || ta.value.length;
+      ta.value = ta.value.slice(0, start) + md + ta.value.slice(start);
+      ta.focus();
+      status.innerHTML = `<span style="color:#34d399">✅ 첨부됨</span>`;
+      setTimeout(() => { status.textContent = ''; }, 3000);
+    } catch (err) {
+      status.innerHTML = `<span style="color:#f87171">❌ ${err.message || '업로드 실패'}</span>`;
+    }
+    input.value = '';
+  }
+
   // 스키마에 칼럼 없으면 자동으로 빼고 재시도
   async function safePostInsert(payload) {
     const tryInsert = async (p) => sb.from('posts').insert(p);
@@ -1607,6 +1786,7 @@
       } else if (makeType === 'image') {
         const title = document.getElementById('u-image-title').value.trim();
         if (!title) throw new Error('제목을 입력해주세요.');
+        const body = document.getElementById('u-image-body').value.trim() || null;
         const isQ = document.getElementById('u-is-guess').checked;
         const correctAnswer = isQ ? document.getElementById('u-guess-answer').value : null;
         const post_type = isQ ? 'guess' : 'flick';
@@ -1642,6 +1822,7 @@
           title, video_url: imageUrl, video_type: 'image',
           thumbnail_url: imageUrl,
           media_type: 'image',
+          body,
           category, post_type, correct_answer: correctAnswer,
           user_id: currentUser.id,
         });
@@ -1650,11 +1831,13 @@
         document.getElementById('u-image-url').value = '';
         document.getElementById('u-image-url-preview').style.display = 'none';
         document.getElementById('u-image-title').value = '';
+        document.getElementById('u-image-body').value = '';
         document.getElementById('u-is-guess').checked = false;
         toggleGuessAnswer();
       } else {
         const title = document.getElementById('u-video-title').value.trim();
         if (!title) throw new Error('제목을 입력해주세요.');
+        const body = document.getElementById('u-video-body').value.trim() || null;
         const isQ = document.getElementById('u-is-guess').checked;
         const correctAnswer = isQ ? document.getElementById('u-guess-answer').value : null;
         const post_type = isQ ? 'guess' : 'flick';
@@ -1668,6 +1851,7 @@
             title, video_url: url, video_type: 'youtube',
             thumbnail_url: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
             media_type: 'video',
+            body,
             category, post_type, correct_answer: correctAnswer,
             user_id: currentUser.id,
           });
@@ -1689,6 +1873,7 @@
             title, video_url: publicUrl, video_type: 'upload',
             thumbnail_url: '', storage_path: filePath,
             media_type: 'video',
+            body,
             category, post_type, correct_answer: correctAnswer,
             user_id: currentUser.id,
           });
@@ -1699,6 +1884,7 @@
           document.getElementById('u-file-preview').textContent = '';
         }
         document.getElementById('u-video-title').value = '';
+        document.getElementById('u-video-body').value = '';
         document.getElementById('u-is-guess').checked = false;
         toggleGuessAnswer();
       }
@@ -2071,15 +2257,102 @@
     setTimeout(() => btn.classList.remove('heart-pop'), 300);
   }
 
+  // 보기 모드 (그리드 / 리스트) — localStorage 기억
+  let shareView = localStorage.getItem('aiflick_share_view') || 'grid';
+  let shareQuery = '';
+  function setShareView(v) {
+    shareView = (v === 'list') ? 'list' : 'grid';
+    localStorage.setItem('aiflick_share_view', shareView);
+    renderShare();
+  }
+  function setShareQuery(q) {
+    shareQuery = (q || '').trim().toLowerCase();
+    renderShareBody();
+  }
+  function shareToolbarHTML() {
+    return `
+      <div class="share-toolbar">
+        <input class="share-search" type="search" placeholder="제목 / 본문 검색..." oninput="setShareQuery(this.value)" value="${escapeHtml(shareQuery)}">
+        <div class="view-toggle">
+          <button class="${shareView === 'grid' ? 'active' : ''}" onclick="setShareView('grid')" title="그리드">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
+            그리드
+          </button>
+          <button class="${shareView === 'list' ? 'active' : ''}" onclick="setShareView('list')" title="리스트">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"/></svg>
+            리스트
+          </button>
+        </div>
+      </div>`;
+  }
+  function filteredSharePosts() {
+    if (!shareQuery) return allPosts;
+    return allPosts.filter(p => {
+      const t = (p.title || '').toLowerCase();
+      const b = (p.body || '').toLowerCase();
+      return t.includes(shareQuery) || b.includes(shareQuery);
+    });
+  }
+  function boardTagFor(post) {
+    const t = getPostType(post);
+    const m = getMediaType(post);
+    if (t === 'talk' || m === 'text') return { cls: 'talk', label: 'TALK' };
+    if (m === 'image') return t === 'guess' ? { cls: 'image-guess', label: 'GUESS·IMG' } : { cls: 'image', label: 'IMAGE' };
+    if (t === 'guess') return { cls: 'guess', label: 'GUESS' };
+    return { cls: 'flick', label: 'FLICK' };
+  }
+  function renderBoardList(posts) {
+    if (!posts.length) {
+      return `<div class="empty-state"><div class="emoji">🔎</div><h3>결과 없음</h3><p>검색어와 일치하는 포스트가 없어요.</p></div>`;
+    }
+    const rows = posts.map((p, idx) => {
+      const tag = boardTagFor(p);
+      const num = posts.length - idx; // 최신부터 큰 번호
+      const date = new Date(p.created_at).toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit' });
+      return `
+        <div class="board-row" onclick="openModal('${p.id}')">
+          <div class="b-meta b-num">#${num}</div>
+          <div class="b-title">${escapeHtml(p.title || '(제목 없음)')}</div>
+          <div><span class="b-tag ${tag.cls}">${tag.label}</span></div>
+          <div class="b-meta b-date">${date}</div>
+          <div class="b-meta b-views">${p.view_count || 0}</div>
+          <div class="b-meta b-cmt">💬</div>
+        </div>`;
+    }).join('');
+    return `<div class="board-list">
+      <div class="board-head">
+        <div>번호</div>
+        <div>제목</div>
+        <div>타입</div>
+        <div class="b-date">날짜</div>
+        <div class="b-views">조회</div>
+        <div class="b-cmt"></div>
+      </div>
+      ${rows}
+    </div>`;
+  }
+
   // ── MSG / SHARE 렌더 ──
   function renderShare() {
     const container = document.getElementById('msg-container');
-    const posts = allPosts;
-    if (!posts.length) {
+    if (!allPosts.length) {
       container.innerHTML = `<div class="empty-state"><div class="emoji">🎬</div><h3>아직 아무도 없어요</h3><p>첫 번째로 영상이나 글을 올려보세요.<br><button class="login-btn make-btn" style="margin-top:16px" onclick="showUploadModal()">+ Make</button></p></div>`;
       return;
     }
-    container.innerHTML = `<div class="grid">${posts.map(renderPostCard).join('')}</div>`;
+    container.innerHTML = `${shareToolbarHTML()}<div id="share-body"></div>`;
+    renderShareBody();
+  }
+  function renderShareBody() {
+    const body = document.getElementById('share-body');
+    if (!body) return;
+    const posts = filteredSharePosts();
+    if (shareView === 'list') {
+      body.innerHTML = renderBoardList(posts);
+    } else {
+      body.innerHTML = posts.length
+        ? `<div class="grid">${posts.map(renderPostCard).join('')}</div>`
+        : `<div class="empty-state"><div class="emoji">🔎</div><h3>결과 없음</h3><p>검색어와 일치하는 포스트가 없어요.</p></div>`;
+    }
   }
 
   // 사용자의 Guess 게임 스탯 (정답률 / 스트릭) 계산
@@ -2261,6 +2534,9 @@
         </div>`;
     }
 
+    const previewText = bodyPreview(post.body, 100);
+    const previewHTML = previewText ? `<div class="post-body-preview">${escapeHtml(previewText)}</div>` : '';
+
     // 이미지 카드
     if (media === 'image') {
       const src = post.thumbnail_url || post.video_url || '';
@@ -2274,6 +2550,7 @@
           </div>
           <div class="post-body">
             <div class="post-title">${escapeHtml(post.title || '')}</div>
+            ${previewHTML}
             <div class="post-meta">
               <span>${new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
               <span class="dot">·</span>
@@ -2296,6 +2573,7 @@
         </div>
         <div class="post-body">
           <div class="post-title">${escapeHtml(post.title || '')}</div>
+          ${previewHTML}
           <div class="post-meta">
             <span>${new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
             <span class="dot">·</span>
@@ -2318,7 +2596,7 @@
     let mediaHTML = '';
 
     if (type === 'talk') {
-      mediaHTML = `<div class="talk-body-md">${escapeHtml(post.body || '')}</div>`;
+      mediaHTML = `<div class="talk-body-md">${renderBodyMarkdown(post.body)}</div>`;
     } else if (isImage(post)) {
       mediaHTML = `<div class="modal-image"><img src="${escapeHtml(post.video_url)}" alt="${escapeHtml(post.title || '')}"></div>`;
     } else {
@@ -2372,8 +2650,14 @@
     const reactionTypes = [{type:'hot',emoji:'🔥'},{type:'funny',emoji:'😂'},{type:'wow',emoji:'🤯'},{type:'like',emoji:'👍'}];
     const { data: reactions } = await sb.from('reactions').select('*').eq('post_id', postId);
 
+    // 영상/사진 포스트의 본문 (있을 때만)
+    const bodyHTML = (type !== 'talk' && post.body)
+      ? `<div class="modal-body-text">${renderBodyMarkdown(post.body)}</div>`
+      : '';
+
     document.getElementById('modal-body').innerHTML = `
       ${mediaHTML}
+      ${bodyHTML}
       <div class="reaction-bar" style="margin-top:14px">
         ${reactionTypes.map(r => { const cnt=(reactions||[]).filter(rx=>rx.type===r.type).length; return `<button class="reaction-btn" onclick="modalReact('${postId}','${r.type}',this)">${r.emoji} <span>${cnt}</span></button>`; }).join('')}
       </div>

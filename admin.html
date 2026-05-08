@@ -529,6 +529,10 @@
           <label class="form-label">제목 *</label>
           <input class="form-input" type="text" id="u-video-title" placeholder="영상 제목">
         </div>
+        <div class="form-group">
+          <label class="form-label">설명 (선택)</label>
+          <textarea class="form-textarea" id="u-video-body" placeholder="프롬프트 / 만든 과정 / 한마디..." style="min-height:90px;"></textarea>
+        </div>
 
         <div class="form-group">
           <label class="form-label">썸네일 URL (선택)</label>
@@ -563,6 +567,10 @@
         <div class="form-group">
           <label class="form-label">제목 *</label>
           <input class="form-input" type="text" id="u-image-title" placeholder="이미지 제목">
+        </div>
+        <div class="form-group">
+          <label class="form-label">설명 (선택)</label>
+          <textarea class="form-textarea" id="u-image-body" placeholder="프롬프트 / 사용한 도구 / 한마디..." style="min-height:90px;"></textarea>
         </div>
       </div>
 
@@ -900,6 +908,7 @@
       } else if (makeType === 'image') {
         const title = document.getElementById('u-image-title').value.trim();
         if (!title) throw new Error('제목을 입력해주세요.');
+        const body = document.getElementById('u-image-body').value.trim() || null;
         const isG = document.getElementById('u-is-guess').checked;
         const correctAnswer = isG ? document.getElementById('u-guess-answer').value : null;
         const post_type = isG ? 'guess' : 'flick';
@@ -933,7 +942,7 @@
         const res = await safePostInsert({
           title, video_url: imageUrl, video_type: 'image',
           thumbnail_url: imageUrl,
-          media_type: 'image',
+          media_type: 'image', body,
           category, post_type, correct_answer: correctAnswer,
           user_id: currentUser.id,
         });
@@ -941,9 +950,11 @@
         document.getElementById('u-image-url').value = '';
         document.getElementById('u-image-url-preview').style.display = 'none';
         document.getElementById('u-image-title').value = '';
+        document.getElementById('u-image-body').value = '';
       } else {
         const title = document.getElementById('u-video-title').value.trim();
         if (!title) throw new Error('제목을 입력해주세요.');
+        const body = document.getElementById('u-video-body').value.trim() || null;
         const isG = document.getElementById('u-is-guess').checked;
         const correctAnswer = isG ? document.getElementById('u-guess-answer').value : null;
         const post_type = isG ? 'guess' : 'flick';
@@ -958,7 +969,7 @@
           const res = await safePostInsert({
             title, video_url: url, video_type: 'youtube',
             thumbnail_url: thumbnail, category, post_type, correct_answer: correctAnswer,
-            media_type: 'video',
+            media_type: 'video', body,
             user_id: currentUser.id,
           });
           if (res.error) throw res.error;
@@ -978,7 +989,7 @@
           const res = await safePostInsert({
             title, video_url: publicUrl, video_type: 'upload',
             thumbnail_url: customThumb || '', storage_path: filePath,
-            media_type: 'video',
+            media_type: 'video', body,
             category, post_type, correct_answer: correctAnswer,
             user_id: currentUser.id,
           });
@@ -989,6 +1000,7 @@
           document.getElementById('u-file-preview').textContent = '';
         }
         document.getElementById('u-video-title').value = '';
+        document.getElementById('u-video-body').value = '';
         document.getElementById('u-is-guess').checked = false;
         toggleGuessAnswer();
       }
