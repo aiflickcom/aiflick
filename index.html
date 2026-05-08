@@ -1600,7 +1600,29 @@
     document.getElementById('header-sub').classList.remove('show');
   }
 
+  // URL hash로 현재 위치 표현 — 새로고침해도 그 자리 유지
+  function buildHash(mode, msgTab) {
+    if (mode === 'msg') return `#msg/${msgTab || currentMsgTab}`;
+    return `#${mode}`;
+  }
+  function syncHash() {
+    if (!currentMode) {
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      return;
+    }
+    const target = buildHash(currentMode, currentMsgTab);
+    if (location.hash !== target) {
+      history.replaceState(null, '', target);
+    }
+  }
+
   function enterMode(mode) {
+    // ME 모드는 로그인 필수 — currentMode 갱신 전에 체크
+    if (mode === 'me' && !currentUser) {
+      showLoginModal();
+      return;
+    }
+
     currentMode = mode;
     const remember = document.getElementById('remember-mode')?.checked;
     if (remember) localStorage.setItem('aiflick_mode', mode);
@@ -1614,22 +1636,16 @@
       bcEl.textContent = mode;
     }
 
-    // ME 모드는 로그인 필수
-    if (mode === 'me' && !currentUser) {
-      showLoginModal();
-      currentMode = null;
-      return;
-    }
-
     document.getElementById('flick-wrap').classList.toggle('active', mode === 'flick');
     document.getElementById('msg-wrap').classList.toggle('active', mode === 'msg');
     document.getElementById('me-wrap').classList.toggle('active', mode === 'me');
     document.getElementById('header-sub').classList.toggle('show', mode === 'msg');
 
     if (mode === 'flick') renderFlick();
-    else if (mode === 'msg') setMsgTab(currentMsgTab);
+    else if (mode === 'msg') setMsgTab(currentMsgTab, /*skipHash*/ true);
     else if (mode === 'me') renderMe();
 
+    syncHash();
     updateHeaderRight();
     document.getElementById('user-menu').classList.remove('show');
   }
@@ -1638,10 +1654,11 @@
     if (e) e.preventDefault();
     localStorage.removeItem('aiflick_mode');
     currentMode = null;
+    history.replaceState(null, '', location.pathname + location.search);
     showLanding();
   }
 
-  function setMsgTab(tab) {
+  function setMsgTab(tab, skipHash) {
     if (tab !== 'share' && tab !== 'guess') tab = 'share';
     currentMsgTab = tab;
     document.querySelectorAll('.msg-tab-btn').forEach(b => {
@@ -1649,6 +1666,7 @@
     });
     if (tab === 'share') renderShare();
     else renderGuess();
+    if (!skipHash && currentMode === 'msg') syncHash();
   }
 
   function rerenderCurrent() {
@@ -2244,16 +2262,63 @@
     document.getElementById('modal-body').innerHTML = '';
   }
 
+  // URL 해시에서 모드/탭 파싱
+  function parseRoute() {
+    const raw = (location.hash || '').replace(/^#/, '');
+    if (!raw) return null;
+    const parts = raw.split('/');
+    const mode = parts[0];
+    if (mode !== 'flick' && mode !== 'msg' && mode !== 'me') return null;
+    if (mode === 'msg') {
+      const tab = parts[1];
+      return { mode, msgTab: (tab === 'share' || tab === 'guess') ? tab : 'share' };
+    }
+    return { mode };
+  }
+
+  function routeFromUrl() {
+    const route = parseRoute();
+    if (route) {
+      if (route.msgTab) currentMsgTab = route.msgTab;
+      enterMode(route.mode);
+      return true;
+    }
+    return false;
+  }
+
+  // 브라우저 뒤로/앞으로 (외부에서 hash 변경된 경우)
+  window.addEventListener('hashchange', () => {
+    const route = parseRoute();
+    if (route) {
+      if (route.msgTab && route.msgTab !== currentMsgTab) {
+        currentMsgTab = route.msgTab;
+      }
+      if (route.mode !== currentMode) {
+        enterMode(route.mode);
+      } else if (route.mode === 'msg' && route.msgTab) {
+        setMsgTab(route.msgTab, /*skipHash*/ true);
+      }
+    } else {
+      // 해시 비어있으면 랜딩으로 (단, currentMode가 있으면 다시 hash 채움)
+      if (currentMode) syncHash();
+      else showLanding();
+    }
+  });
+
   // ── INIT ──
   async function init() {
     await initAuth();
     await loadAll();
+    // 1) URL hash 우선
+    if (routeFromUrl()) return;
+    // 2) localStorage saved (다음부터 자동 진입 체크한 사용자)
     const savedMode = localStorage.getItem('aiflick_mode');
-    if (savedMode === 'flick' || savedMode === 'msg') {
+    if (savedMode === 'flick' || savedMode === 'msg' || savedMode === 'me') {
       enterMode(savedMode);
-    } else {
-      showLanding();
+      return;
     }
+    // 3) 첫 방문 / 저장 없음 → 랜딩
+    showLanding();
   }
   init();
 </script>
