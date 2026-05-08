@@ -255,8 +255,8 @@
     .header-sub {
       padding: 0 16px 10px;
       display: none;
-      align-items: center; justify-content: space-between;
-      gap: 12px;
+      align-items: center; justify-content: flex-start;
+      gap: 14px;
     }
     .header-sub.show { display: flex; }
     .msg-tabs { display: flex; gap: 6px; }
@@ -1081,11 +1081,11 @@
     <div class="header-right" id="header-right"></div>
   </div>
   <div class="header-sub" id="header-sub">
+    <button class="login-btn make-btn" onclick="showUploadModal()">+ Make</button>
     <div class="msg-tabs">
       <button class="msg-tab-btn active" data-tab="share" onclick="setMsgTab('share')">Share</button>
       <button class="msg-tab-btn" data-tab="guess" onclick="setMsgTab('guess')">Guess</button>
     </div>
-    <button class="login-btn make-btn" onclick="showUploadModal()">+ Make</button>
   </div>
 </header>
 
