@@ -337,6 +337,8 @@
     .type-tag.flick { background: rgba(255,255,255,0.06); color: var(--muted2); border: 1px solid var(--border2); }
     .type-tag.guess { background: rgba(6,182,212,0.15); color: var(--accent2); border: 1px solid rgba(6,182,212,0.3); }
     .type-tag.talk { background: rgba(168,85,247,0.15); color: var(--accent); border: 1px solid rgba(168,85,247,0.3); }
+    .type-tag.image { background: rgba(245,158,11,0.15); color: var(--accent3); border: 1px solid rgba(245,158,11,0.3); }
+    .type-stat.image .lbl { color: var(--accent3); }
     .answer-tag {
       font-family: 'Space Grotesk', monospace;
       font-size: 11px; font-weight: 700;
@@ -484,6 +486,7 @@
     <div class="type-breakdown">
       <div class="type-stat flick"><span class="lbl">FLICK</span><span class="num" id="stat-flick">0</span></div>
       <div class="type-stat guess"><span class="lbl">GUESS</span><span class="num" id="stat-guess">0</span></div>
+      <div class="type-stat image"><span class="lbl">IMAGE</span><span class="num" id="stat-image">0</span></div>
       <div class="type-stat talk"><span class="lbl">TALK</span><span class="num" id="stat-talk">0</span></div>
     </div>
 
@@ -492,6 +495,7 @@
     <div class="form-card">
       <div class="make-type-tabs">
         <button class="make-type-tab active" id="m-tab-video" onclick="setMakeType('video')">영상</button>
+        <button class="make-type-tab" id="m-tab-image" onclick="setMakeType('image')">사진</button>
         <button class="make-type-tab" id="m-tab-text" onclick="setMakeType('text')">글 (Talk)</button>
       </div>
 
@@ -526,25 +530,39 @@
           <input class="form-input" type="text" id="u-video-title" placeholder="영상 제목">
         </div>
 
-        <!-- Guess 모드 토글 -->
-        <div class="guess-toggle">
-          <label class="guess-toggle-row">
-            <input type="checkbox" id="u-is-guess" onchange="toggleGuessAnswer()">
-            <span>Guess 모드 — 다른 사람이 맞히기</span>
-          </label>
-          <div class="guess-toggle-desc">정답을 비공개로 두고 사용자들이 AI/Real 투표.</div>
-          <div class="guess-answer-row" id="u-guess-answer-row">
-            <span style="color:var(--muted2);font-weight:600;font-size:12px;">정답:</span>
-            <select class="form-select" id="u-guess-answer" style="flex:1;">
-              <option value="ai">AI</option>
-              <option value="real">Real (진짜)</option>
-            </select>
-          </div>
-        </div>
-
         <div class="form-group">
           <label class="form-label">썸네일 URL (선택)</label>
           <input class="form-input" type="url" id="u-thumb" placeholder="비워두면 YouTube 자동 적용">
+        </div>
+      </div>
+
+      <!-- 사진 -->
+      <div id="make-image-section" style="display:none;">
+        <div class="upload-type-row">
+          <button class="upload-type-btn active" id="i-type-url" onclick="setImageUploadType('url')">🔗 이미지 URL</button>
+          <button class="upload-type-btn" id="i-type-file" onclick="setImageUploadType('file')">📁 파일 업로드</button>
+        </div>
+        <div id="i-url-section">
+          <div class="form-group">
+            <label class="form-label">이미지 URL *</label>
+            <input class="form-input" type="url" id="u-image-url" placeholder="https://..." oninput="previewImageUrl(this.value)">
+            <div class="yt-preview" id="u-image-url-preview" style="display:none;"><img id="u-image-url-thumb" src=""></div>
+          </div>
+        </div>
+        <div id="i-file-section" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">이미지 파일 * (최대 10MB · jpg/png/webp/gif)</label>
+            <input class="form-input" type="file" id="u-image-file" accept="image/jpeg,image/png,image/webp,image/gif" onchange="previewImageFile(this)">
+            <div id="u-image-file-preview" style="font-size:12px;color:var(--muted);margin-top:5px;"></div>
+            <div class="progress-wrap" id="u-image-progress-wrap" style="display:none;">
+              <div class="progress-meta">업로드 중... <span id="u-image-progress-pct">0</span>%</div>
+              <div class="progress-bar-bg"><div class="progress-bar" id="u-image-progress-bar"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">제목 *</label>
+          <input class="form-input" type="text" id="u-image-title" placeholder="이미지 제목">
         </div>
       </div>
 
@@ -560,6 +578,22 @@
         </div>
       </div>
 
+      <!-- 공통 Guess 토글 (영상/사진일 때만) -->
+      <div class="guess-toggle" id="make-guess-toggle">
+        <label class="guess-toggle-row">
+          <input type="checkbox" id="u-is-guess" onchange="toggleGuessAnswer()">
+          <span>Guess 모드 — 다른 사람이 맞히기</span>
+        </label>
+        <div class="guess-toggle-desc">정답을 비공개로 두고 사용자들이 AI/Real 투표.</div>
+        <div class="guess-answer-row" id="u-guess-answer-row">
+          <span style="color:var(--muted2);font-weight:600;font-size:12px;">정답:</span>
+          <select class="form-select" id="u-guess-answer" style="flex:1;">
+            <option value="ai">AI</option>
+            <option value="real">Real (진짜)</option>
+          </select>
+        </div>
+      </div>
+
       <button class="btn-primary" id="upload-btn" onclick="submitUpload()">올리기</button>
       <div class="alert alert-error" id="upload-error"></div>
       <div class="alert alert-success" id="upload-success">✅ 올라갔어요</div>
@@ -571,6 +605,7 @@
       <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
       <button class="filter-btn" data-filter="flick" onclick="setFilter('flick')">Flick</button>
       <button class="filter-btn" data-filter="guess" onclick="setFilter('guess')">Guess</button>
+      <button class="filter-btn" data-filter="image" onclick="setFilter('image')">Image</button>
       <button class="filter-btn" data-filter="talk" onclick="setFilter('talk')">Talk</button>
     </div>
     <div class="posts-table">
@@ -615,6 +650,12 @@
     if (post.category === 'guess' || post.category === 'lab') return 'guess';
     return 'flick';
   }
+  function getMediaType(post) {
+    if (post.media_type) return post.media_type;
+    if (!post.video_url && post.body) return 'text';
+    if (post.video_url && /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(post.video_url)) return 'image';
+    return 'video';
+  }
 
   // ── AUTH ──
   async function init() {
@@ -656,7 +697,7 @@
 
   async function loadStats() {
     const [posts, votes, reactions, comments] = await Promise.all([
-      sb.from('posts').select('id, post_type, category, body, video_url'),
+      sb.from('posts').select('id, post_type, category, body, video_url, media_type'),
       sb.from('votes').select('id', { count: 'exact', head: true }),
       sb.from('reactions').select('id', { count: 'exact', head: true }),
       sb.from('comments').select('id', { count: 'exact', head: true }),
@@ -666,8 +707,11 @@
     document.getElementById('stat-votes').textContent = votes.count || 0;
     document.getElementById('stat-reactions').textContent = reactions.count || 0;
     document.getElementById('stat-comments').textContent = comments.count || 0;
-    document.getElementById('stat-flick').textContent = allP.filter(p => getPostType(p) === 'flick').length;
+    // FLICK = video flick, GUESS = any guess type, IMAGE = image flick (non-guess), TALK = text
+    document.getElementById('stat-flick').textContent = allP.filter(p => getPostType(p) === 'flick' && getMediaType(p) === 'video').length;
     document.getElementById('stat-guess').textContent = allP.filter(p => getPostType(p) === 'guess').length;
+    const imgEl = document.getElementById('stat-image');
+    if (imgEl) imgEl.textContent = allP.filter(p => getMediaType(p) === 'image' && getPostType(p) !== 'guess').length;
     document.getElementById('stat-talk').textContent = allP.filter(p => getPostType(p) === 'talk').length;
   }
 
@@ -688,7 +732,11 @@
   function renderPosts() {
     const list = document.getElementById('posts-list');
     let posts = allPosts;
-    if (currentFilter !== 'all') posts = posts.filter(p => getPostType(p) === currentFilter);
+    if (currentFilter === 'image') {
+      posts = posts.filter(p => getMediaType(p) === 'image');
+    } else if (currentFilter !== 'all') {
+      posts = posts.filter(p => getPostType(p) === currentFilter);
+    }
 
     if (!posts.length) {
       list.innerHTML = '<div class="empty-posts">포스트가 없어요</div>';
@@ -696,14 +744,19 @@
     }
     list.innerHTML = posts.map(post => {
       const type = getPostType(post);
-      const typeLabel = type.toUpperCase();
+      const media = getMediaType(post);
+      // Tag: image media는 IMAGE로 표시 (post_type='guess' + image면 "GUESS · IMG"로)
+      const typeLabel = (media === 'image' && type !== 'talk')
+        ? (type === 'guess' ? 'GUESS · IMG' : 'IMAGE')
+        : type.toUpperCase();
+      const tagCls = (media === 'image' && type !== 'talk' && type !== 'guess') ? 'image' : type;
       const answer = post.correct_answer
         ? `<span class="answer-tag ${post.correct_answer}">${post.correct_answer === 'ai' ? 'AI' : 'REAL'}</span>`
         : '<span style="color:var(--muted);font-size:11px;">—</span>';
       return `
         <div class="table-row">
           <div class="post-title-cell" title="${escapeHtml(post.title || '')}">${escapeHtml(post.title || '')}</div>
-          <div><span class="type-tag ${type}">${typeLabel}</span></div>
+          <div><span class="type-tag ${tagCls}">${typeLabel}</span></div>
           <div>${answer}</div>
           <div class="post-date-cell">${new Date(post.created_at).toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit' })}</div>
           <div><button class="delete-btn" onclick="deletePost('${post.id}', this)">삭제</button></div>
@@ -728,10 +781,13 @@
   // ── MAKE 폼 ──
   function setMakeType(type) {
     makeType = type;
-    document.getElementById('m-tab-video').classList.toggle('active', type === 'video');
-    document.getElementById('m-tab-text').classList.toggle('active', type === 'text');
-    document.getElementById('make-video-section').style.display = type === 'video' ? 'block' : 'none';
-    document.getElementById('make-text-section').style.display = type === 'text' ? 'block' : 'none';
+    ['video', 'image', 'text'].forEach(t => {
+      const tab = document.getElementById('m-tab-' + t);
+      const section = document.getElementById('make-' + t + '-section');
+      if (tab) tab.classList.toggle('active', type === t);
+      if (section) section.style.display = type === t ? 'block' : 'none';
+    });
+    document.getElementById('make-guess-toggle').style.display = (type === 'text') ? 'none' : 'block';
   }
 
   function setUploadType(type) {
@@ -740,6 +796,32 @@
     document.getElementById('u-type-file').classList.toggle('active', type === 'file');
     document.getElementById('u-youtube-section').style.display = type === 'youtube' ? 'block' : 'none';
     document.getElementById('u-file-section').style.display = type === 'file' ? 'block' : 'none';
+  }
+
+  let imageUploadType = 'url';
+  function setImageUploadType(type) {
+    imageUploadType = type;
+    document.getElementById('i-type-url').classList.toggle('active', type === 'url');
+    document.getElementById('i-type-file').classList.toggle('active', type === 'file');
+    document.getElementById('i-url-section').style.display = type === 'url' ? 'block' : 'none';
+    document.getElementById('i-file-section').style.display = type === 'file' ? 'block' : 'none';
+  }
+  function previewImageUrl(url) {
+    const preview = document.getElementById('u-image-url-preview');
+    const thumb = document.getElementById('u-image-url-thumb');
+    if (url && /^https?:\/\//.test(url)) { thumb.src = url; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; }
+  }
+  function previewImageFile(input) {
+    const file = input.files[0];
+    const preview = document.getElementById('u-image-file-preview');
+    if (!file) { preview.textContent = ''; return; }
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    if (file.size > 10 * 1024 * 1024) {
+      preview.innerHTML = '<span style="color:var(--danger)">⚠️ 10MB 초과</span>';
+      input.value = ''; return;
+    }
+    preview.textContent = `✅ ${file.name} (${sizeMB}MB)`;
   }
 
   function toggleGuessAnswer() {
@@ -777,8 +859,13 @@
       ({ error } = await tryInsert(rest));
       if (!error) return { error: null };
     }
+    if (error && (msg.includes("'media_type'") || msg.includes('media_type column'))) {
+      const { media_type, ...rest } = payload;
+      ({ error } = await tryInsert(rest));
+      if (!error) return { error: null };
+    }
     if (error && (msg.includes("'post_type'") || msg.includes("'correct_answer'") || msg.includes("'body'"))) {
-      const { user_id, post_type, correct_answer, body, ...legacy } = payload;
+      const { user_id, post_type, correct_answer, body, media_type, ...legacy } = payload;
       if (!legacy.video_url && payload.body) {
         return { error: { message: 'post_type/body 칼럼이 없음. SQL 마이그레이션 필요.' } };
       }
@@ -804,11 +891,56 @@
         const res = await safePostInsert({
           title, body, post_type: 'talk', category: 'funny',
           video_url: '', video_type: 'youtube', thumbnail_url: '',
+          media_type: 'text',
           user_id: currentUser.id,
         });
         if (res.error) throw res.error;
         document.getElementById('u-talk-title').value = '';
         document.getElementById('u-talk-body').value = '';
+      } else if (makeType === 'image') {
+        const title = document.getElementById('u-image-title').value.trim();
+        if (!title) throw new Error('제목을 입력해주세요.');
+        const isG = document.getElementById('u-is-guess').checked;
+        const correctAnswer = isG ? document.getElementById('u-guess-answer').value : null;
+        const post_type = isG ? 'guess' : 'flick';
+        const category = isG ? 'guess' : 'funny';
+
+        let imageUrl = '';
+        if (imageUploadType === 'url') {
+          imageUrl = document.getElementById('u-image-url').value.trim();
+          if (!imageUrl || !/^https?:\/\//.test(imageUrl)) throw new Error('올바른 이미지 URL을 입력해주세요.');
+        } else {
+          const fileInput = document.getElementById('u-image-file');
+          const file = fileInput.files[0];
+          if (!file) throw new Error('파일을 선택해주세요.');
+          document.getElementById('u-image-progress-wrap').style.display = 'block';
+          const ext = file.name.split('.').pop();
+          const filePath = `public/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+          let bucket = 'images';
+          let upErr;
+          ({ error: upErr } = await sb.storage.from(bucket).upload(filePath, file, { cacheControl: '3600', upsert: false }));
+          if (upErr) {
+            bucket = 'videos';
+            ({ error: upErr } = await sb.storage.from(bucket).upload(filePath, file, { cacheControl: '3600', upsert: false }));
+          }
+          if (upErr) throw upErr;
+          const { data: { publicUrl } } = sb.storage.from(bucket).getPublicUrl(filePath);
+          imageUrl = publicUrl;
+          document.getElementById('u-image-progress-wrap').style.display = 'none';
+          fileInput.value = '';
+          document.getElementById('u-image-file-preview').textContent = '';
+        }
+        const res = await safePostInsert({
+          title, video_url: imageUrl, video_type: 'image',
+          thumbnail_url: imageUrl,
+          media_type: 'image',
+          category, post_type, correct_answer: correctAnswer,
+          user_id: currentUser.id,
+        });
+        if (res.error) throw res.error;
+        document.getElementById('u-image-url').value = '';
+        document.getElementById('u-image-url-preview').style.display = 'none';
+        document.getElementById('u-image-title').value = '';
       } else {
         const title = document.getElementById('u-video-title').value.trim();
         if (!title) throw new Error('제목을 입력해주세요.');
@@ -826,6 +958,7 @@
           const res = await safePostInsert({
             title, video_url: url, video_type: 'youtube',
             thumbnail_url: thumbnail, category, post_type, correct_answer: correctAnswer,
+            media_type: 'video',
             user_id: currentUser.id,
           });
           if (res.error) throw res.error;
@@ -845,6 +978,7 @@
           const res = await safePostInsert({
             title, video_url: publicUrl, video_type: 'upload',
             thumbnail_url: customThumb || '', storage_path: filePath,
+            media_type: 'video',
             category, post_type, correct_answer: correctAnswer,
             user_id: currentUser.id,
           });
