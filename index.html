@@ -183,10 +183,11 @@
     .bc-mode .expand {
       font-family: 'Orbitron', sans-serif;
       font-size: 13px; font-weight: 700;
-      letter-spacing: 3px; text-transform: uppercase;
+      letter-spacing: 0.5px;
       color: var(--muted2);
     }
-    .bc-mode .expand .dot { color: var(--border2); margin: 0 4px; }
+    .bc-mode .expand .initial { color: var(--text); }
+    .bc-mode .expand .dot { color: var(--border2); margin: 0 5px; }
 
     .header-right { display: flex; align-items: center; gap: 10px; }
 
@@ -1520,7 +1521,7 @@
     document.getElementById('main-header').classList.add('show');
     const bcEl = document.getElementById('bc-mode');
     if (mode === 'msg') {
-      bcEl.innerHTML = `msg <span class="expand">(Make<span class="dot">·</span>Share<span class="dot">·</span>Guess)</span>`;
+      bcEl.innerHTML = `msg <span class="expand">(<span class="initial">M</span>ake<span class="dot">·</span><span class="initial">S</span>hare<span class="dot">·</span><span class="initial">G</span>uess)</span>`;
     } else {
       bcEl.textContent = mode;
     }
