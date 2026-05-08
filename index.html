@@ -651,7 +651,7 @@
     /* Talk 카드 (썸네일 없음) */
     .post-card.talk { background: var(--card); }
     .post-card.talk .talk-headline {
-      padding: 22px 18px 14px;
+      padding: 44px 18px 14px;
       font-family: 'Space Grotesk', sans-serif;
       font-size: 19px; font-weight: 700; line-height: 1.35;
       color: var(--text);
@@ -1955,7 +1955,7 @@
       mediaHTML = `<div class="talk-body-md">${escapeHtml(post.body || '')}</div>`;
     } else {
       if (isDirectVideo(post.video_url)) {
-        mediaHTML = `<div class="modal-video"><video src="${escapeHtml(post.video_url)}" controls autoplay playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video></div>`;
+        mediaHTML = `<div class="modal-video"><video src="${escapeHtml(post.video_url)}" controls autoplay playsinline></video></div>`;
       } else if (isYouTube(post.video_url)) {
         mediaHTML = `<div class="modal-video iframe-frame"><iframe src="${getEmbed(post.video_url)}" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe></div>
           <div class="yt-fallback">
@@ -2061,7 +2061,11 @@
     input.value = '';
   }
 
-  function closeModal() { document.getElementById('post-modal').classList.remove('show'); }
+  function closeModal() {
+    document.getElementById('post-modal').classList.remove('show');
+    // iframe/video 즉시 제거해서 백그라운드 재생 방지
+    document.getElementById('modal-body').innerHTML = '';
+  }
 
   // ── INIT ──
   async function init() {
