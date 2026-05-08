@@ -178,7 +178,15 @@
       font-size: 13px; font-weight: 700; letter-spacing: 3px;
       color: var(--text);
       text-transform: uppercase;
+      display: inline-flex; align-items: baseline; gap: 8px;
     }
+    .bc-mode .expand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.5px; text-transform: none;
+      color: var(--muted2);
+    }
+    .bc-mode .expand .dot { color: var(--border2); margin: 0 3px; }
 
     .header-right { display: flex; align-items: center; gap: 10px; }
 
@@ -1510,7 +1518,12 @@
 
     document.getElementById('landing-screen').classList.remove('show');
     document.getElementById('main-header').classList.add('show');
-    document.getElementById('bc-mode').textContent = mode;
+    const bcEl = document.getElementById('bc-mode');
+    if (mode === 'msg') {
+      bcEl.innerHTML = `msg <span class="expand">(Make<span class="dot">·</span>Share<span class="dot">·</span>Guess)</span>`;
+    } else {
+      bcEl.textContent = mode;
+    }
 
     // ME 모드는 로그인 필수
     if (mode === 'me' && !currentUser) {
