@@ -239,6 +239,99 @@
       box-shadow: 0 0 10px var(--glow);
     }
 
+    .level-badge {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      padding: 3px 8px; border-radius: 12px;
+      background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(6,182,212,0.2));
+      border: 1px solid var(--accent);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .level-badge:hover { box-shadow: 0 0 10px var(--glow); }
+
+    /* 레벨업 토스트 */
+    .levelup-toast {
+      position: fixed; top: 80px; right: 20px;
+      z-index: 9999;
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 24px var(--glow);
+      display: flex; align-items: center; gap: 14px;
+      transform: translateX(120%);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .levelup-toast.show { transform: translateX(0); }
+    .levelup-toast .lu-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px; font-weight: 900; letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .levelup-toast .lu-msg {
+      font-size: 13px; color: var(--text); font-weight: 700;
+    }
+
+    /* 마이페이지 — XP 진행 바 */
+    .me-level-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 18px;
+      position: relative; overflow: hidden;
+    }
+    .me-level-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(168,85,247,0.05), rgba(6,182,212,0.04));
+      pointer-events: none;
+    }
+    .me-level-row {
+      position: relative;
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .me-level-row .lv {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px; font-weight: 900; letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .me-level-row .title-text {
+      font-size: 12px; color: var(--muted2); letter-spacing: 1px;
+      font-family: 'Orbitron', sans-serif; font-weight: 700; text-transform: uppercase;
+    }
+    .me-xp-bar {
+      position: relative;
+      height: 8px; background: var(--card2);
+      border-radius: 4px; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .me-xp-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    .me-xp-meta {
+      position: relative;
+      display: flex; justify-content: space-between;
+      margin-top: 6px;
+      font-size: 11px; color: var(--muted);
+      font-family: 'Space Grotesk', monospace;
+    }
+    .me-daily-cap {
+      position: relative; margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--muted);
+      display: flex; justify-content: space-between;
+    }
+    .me-daily-cap .pct {
+      font-family: 'Space Grotesk', monospace; font-weight: 600;
+    }
+
     .user-menu {
       position: fixed; top: 64px; right: 16px;
       background: var(--card);
@@ -1549,6 +1642,7 @@
   let allPosts = [];
   let currentUser = null;
   let isAdmin = false;
+  let userLevelInfo = { xp: 0, level: 1, daily_xp_today: 0, daily_xp_date: null };
 
   // ── 유틸 ──
   function getYouTubeId(url) {
@@ -1586,6 +1680,99 @@
   function isImage(post) { return getMediaType(post) === 'image'; }
   function isVideo(post) { return getMediaType(post) === 'video'; }
 
+  // ─────────────────────────────────────────────────────────
+  // ⚙️  XP / LEVEL 설정 — 여기 값만 바꿔도 시스템 전체 튜닝 가능
+  // ─────────────────────────────────────────────────────────
+  const XP_CONFIG = {
+    DAILY_CAP: 300,                 // 일일 최대 XP (페널티/스트릭 보너스 제외 활동 캡)
+
+    // 행동별 XP 지급량
+    ACTIONS: {
+      UPLOAD_VIDEO:    30,
+      UPLOAD_IMAGE:    25,
+      WRITE_TALK:      15,
+      WRITE_COMMENT:    3,
+      VOTE_GUESS:       2,          // 정/오답 무관 참여 보상 (작게)
+      VOTE_CORRECT:     8,          // Guess 정답 시 추가 보상 (총 +10)
+      REACT:            1,          // 좋아요/리액션
+      // (남이 내 글에 액션할 때 → 받은 사람에게 지급)
+      RECEIVE_LIKE:     2,
+      RECEIVE_COMMENT:  3,
+    },
+
+    // 레벨 공식: nextLevelXp = 100 * level^1.5
+    // floor((xp/100)^(1/1.5)) + 1 = 현재 레벨
+    BASE: 100,
+    EXPONENT: 1.5,
+
+    // 한국어 레벨 라벨 (선택 — 표시용)
+    LEVEL_TITLES: {
+      1:  'Newbie',
+      3:  'Browser',
+      5:  'Active',
+      10: 'Regular',
+      15: 'Veteran',
+      20: 'Elite',
+      30: 'Legend',
+    },
+  };
+
+  function xpToLevel(xp) {
+    if (xp <= 0) return 1;
+    return Math.max(1, Math.floor(Math.pow(xp / XP_CONFIG.BASE, 1 / XP_CONFIG.EXPONENT)) + 1);
+  }
+  function levelToXp(level) {
+    if (level <= 1) return 0;
+    return Math.ceil(XP_CONFIG.BASE * Math.pow(level - 1, XP_CONFIG.EXPONENT));
+  }
+  function nextLevelTitle(level) {
+    let title = '';
+    Object.keys(XP_CONFIG.LEVEL_TITLES)
+      .map(Number).sort((a, b) => a - b)
+      .forEach(threshold => { if (level >= threshold) title = XP_CONFIG.LEVEL_TITLES[threshold]; });
+    return title;
+  }
+
+  // 클라이언트에서 호출하는 XP 부여 함수
+  // 실패해도 본 작업(업로드/투표 등) 성공은 유지 — XP는 부수효과
+  async function awardXP(action, refId = null) {
+    if (!currentUser) return;
+    const amount = XP_CONFIG.ACTIONS[action];
+    if (typeof amount !== 'number') {
+      console.warn('Unknown XP action:', action);
+      return;
+    }
+    try {
+      const { data, error } = await sb.rpc('award_xp', {
+        p_user_id: currentUser.id,
+        p_action: action,
+        p_amount: amount,
+        p_ref_id: refId,
+        p_daily_cap: XP_CONFIG.DAILY_CAP,
+      });
+      if (error) {
+        console.warn('award_xp RPC error:', error.message);
+        return;
+      }
+      // 레벨업 토스트 (옵션)
+      if (data?.leveled_up) showLevelUpToast(data.new_level);
+      // 헤더 레벨 배지 갱신
+      updateHeaderRight();
+      return data;
+    } catch (err) {
+      console.warn('awardXP failed:', err);
+    }
+  }
+
+  function showLevelUpToast(level) {
+    const t = document.createElement('div');
+    t.className = 'levelup-toast';
+    t.innerHTML = `<div class="lu-num">Lv ${level}</div><div class="lu-msg">레벨업!</div>`;
+    document.body.appendChild(t);
+    setTimeout(() => t.classList.add('show'), 50);
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+  }
+
   function escapeHtml(s) {
     return (s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   }
@@ -1619,9 +1806,27 @@
   }
 
   async function loadAdminFlag() {
-    if (!currentUser) { isAdmin = false; return; }
-    const { data: profile } = await sb.from('profiles').select('is_admin').eq('id', currentUser.id).single();
+    if (!currentUser) { isAdmin = false; userLevelInfo = { xp: 0, level: 1, daily_xp_today: 0, daily_xp_date: null }; return; }
+    const { data: profile } = await sb.from('profiles')
+      .select('is_admin, xp, level, daily_xp_today, daily_xp_date')
+      .eq('id', currentUser.id).single();
     isAdmin = !!profile?.is_admin;
+    if (profile) {
+      userLevelInfo = {
+        xp: profile.xp || 0,
+        level: profile.level || 1,
+        daily_xp_today: profile.daily_xp_today || 0,
+        daily_xp_date: profile.daily_xp_date,
+      };
+    }
+  }
+  // 최신 XP/Level 다시 가져오기 (RPC 호출 후)
+  async function refreshLevel() {
+    if (!currentUser) return;
+    const { data } = await sb.from('profiles')
+      .select('xp, level, daily_xp_today, daily_xp_date')
+      .eq('id', currentUser.id).single();
+    if (data) userLevelInfo = data;
   }
 
   function updateHeaderRight() {
@@ -1640,8 +1845,10 @@
       const avatar = currentUser.user_metadata?.avatar_url;
       const name = currentUser.user_metadata?.full_name || currentUser.email;
       document.getElementById('user-name-display').textContent = name;
+      const lvBadge = `<span class="level-badge" onclick="enterMode('me')" title="내 페이지">Lv ${userLevelInfo.level || 1}</span>`;
       auth = `<div style="display:flex;align-items:center;gap:8px;">
         ${isAdmin ? `<a href="admin.html" class="admin-link">관리자</a>` : ''}
+        ${lvBadge}
         ${avatar ? `<img class="user-avatar" src="${avatar}" onclick="toggleUserMenu()">` : `<button class="login-btn" onclick="toggleUserMenu()">${escapeHtml(String(name).slice(0,4))}</button>`}
       </div>`;
     } else {
@@ -2069,6 +2276,11 @@
         toggleGuessAnswer();
       }
 
+      // XP 지급 — 업로드 타입별
+      if (makeType === 'text') awardXP('WRITE_TALK');
+      else if (makeType === 'image') awardXP('UPLOAD_IMAGE');
+      else awardXP('UPLOAD_VIDEO');
+
       successEl.style.display = 'block';
       await loadAll();
       rerenderCurrent();
@@ -2411,6 +2623,12 @@
     const { data: ex } = await sb.from('votes').select('id').eq('post_id', postId).eq('voter_id', voterId);
     if (!ex || !ex.length) {
       await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId, user_id: currentUser?.id || null });
+      // XP — 자기 글엔 보상 X
+      const post = allPosts.find(p => p.id === postId);
+      if (post && post.user_id !== currentUser.id) {
+        awardXP('VOTE_GUESS', postId);
+        if (post.correct_answer && post.correct_answer === type) awardXP('VOTE_CORRECT', postId);
+      }
     }
     btn.parentElement.querySelectorAll('.guess-slideup-btn').forEach(b => b.classList.remove('voted'));
     btn.classList.add('voted');
@@ -2441,6 +2659,8 @@
   async function shortReact(postId, type, btn) {
     if (!currentUser) { showLoginModal(); return; }
     await sb.from('reactions').insert({ post_id: postId, type, user_id: currentUser?.id || null });
+    const post = allPosts.find(p => p.id === postId);
+    if (post && post.user_id !== currentUser.id) awardXP('REACT', postId);
     const el = document.getElementById(`slike-${postId}`);
     if (el) el.textContent = parseInt(el.textContent) + 1;
     btn.classList.add('liked', 'heart-pop');
@@ -2668,6 +2888,36 @@
       console.warn('My Page query error:', err);
     }
 
+    // 최신 레벨 정보 가져오기
+    await refreshLevel();
+    const lv = userLevelInfo.level || 1;
+    const xp = userLevelInfo.xp || 0;
+    const xpForCurrent = levelToXp(lv);
+    const xpForNext = levelToXp(lv + 1);
+    const xpInLevel = xp - xpForCurrent;
+    const xpNeeded = xpForNext - xpForCurrent;
+    const pct = Math.min(100, Math.round(xpInLevel / xpNeeded * 100));
+    const titleText = nextLevelTitle(lv);
+    const dailyToday = (userLevelInfo.daily_xp_date === new Date().toISOString().slice(0,10)) ? userLevelInfo.daily_xp_today : 0;
+    const dailyPct = Math.min(100, Math.round(dailyToday / XP_CONFIG.DAILY_CAP * 100));
+
+    const levelCardHTML = `
+      <div class="me-level-card">
+        <div class="me-level-row">
+          <div class="lv">Lv ${lv}${titleText ? ` · ${titleText}` : ''}</div>
+          <div class="title-text">${xp.toLocaleString()} XP</div>
+        </div>
+        <div class="me-xp-bar"><div class="fill" style="width:${pct}%"></div></div>
+        <div class="me-xp-meta">
+          <span>Lv ${lv} → Lv ${lv + 1}</span>
+          <span>${xpInLevel} / ${xpNeeded} XP (${pct}%)</span>
+        </div>
+        <div class="me-daily-cap">
+          <span>오늘 활동 (일일 캡 ${XP_CONFIG.DAILY_CAP})</span>
+          <span class="pct">${dailyToday} / ${XP_CONFIG.DAILY_CAP} (${dailyPct}%)</span>
+        </div>
+      </div>`;
+
     const profileHTML = `
       <div class="profile-card">
         ${avatar
@@ -2694,6 +2944,7 @@
 
     container.innerHTML = `
       ${profileHTML}
+      ${levelCardHTML}
       ${statsHTML}
       <div class="me-section-title">내 포스트 <span class="accent">posts</span></div>
       ${postsHTML}
@@ -2884,6 +3135,11 @@
     const { data: ex } = await sb.from('votes').select('id').eq('post_id', postId).eq('voter_id', voterId);
     if (!ex || !ex.length) {
       await sb.from('votes').insert({ post_id: postId, vote_type: type, voter_id: voterId, user_id: currentUser?.id || null });
+      const post = allPosts.find(p => p.id === postId);
+      if (post && post.user_id !== currentUser.id) {
+        awardXP('VOTE_GUESS', postId);
+        if (post.correct_answer && post.correct_answer === type) awardXP('VOTE_CORRECT', postId);
+      }
     }
     btn.parentElement.querySelectorAll('.modal-vote-btn').forEach(b => b.classList.remove('voted'));
     btn.classList.add('voted');
@@ -2903,6 +3159,8 @@
   async function modalReact(postId, type, btn) {
     if (!currentUser) { showLoginModal(); return; }
     await sb.from('reactions').insert({ post_id: postId, type, user_id: currentUser?.id || null });
+    const post = allPosts.find(p => p.id === postId);
+    if (post && post.user_id !== currentUser.id) awardXP('REACT', postId);
     btn.querySelector('span').textContent = parseInt(btn.querySelector('span').textContent) + 1;
     btn.classList.add('reacted');
   }
@@ -2911,8 +3169,10 @@
     if (!currentUser) { showLoginModal(); return; }
     const input = document.getElementById('mci');
     const content = input.value.trim(); if (!content) return;
+    if (content.length < 2) return; // 최소 2자 (XP 어뷰징 방지)
     const nickname = currentUser.user_metadata?.full_name || 'user_' + Math.floor(Math.random()*9999);
     await sb.from('comments').insert({ post_id: postId, content, nickname, user_id: currentUser?.id || null });
+    awardXP('WRITE_COMMENT', postId);
     const div = document.createElement('div'); div.className = 'comment-item'; div.style.marginBottom = '8px';
     div.innerHTML = `<span class="nickname">${escapeHtml(nickname)}</span>${escapeHtml(content)}`;
     document.getElementById('modal-comments').appendChild(div);
