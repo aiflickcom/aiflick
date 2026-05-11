@@ -2691,6 +2691,8 @@
           }
         } else {
           item.classList.remove('intersecting-active');
+          // 스크롤로 멀어지면 dismiss 상태 리셋 → 다시 돌아오면 슬라이드업 또 뜸
+          dismissedGuessPosts.delete(postId);
           const slideup = document.getElementById(`gs-${postId}`);
           if (slideup) slideup.classList.remove('show');
 
