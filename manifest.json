@@ -13,28 +13,10 @@
   "categories": ["entertainment", "social", "games"],
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
@@ -42,23 +24,19 @@
       "name": "FLICK",
       "short_name": "FLICK",
       "description": "풀스크린 스와이프 모드",
-      "url": "/#flick",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/#flick"
     },
     {
-      "name": "Guess 게임",
+      "name": "Guess",
       "short_name": "Guess",
       "description": "Real or AI? 맞히기",
-      "url": "/#msg/guess",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/#msg/guess"
     },
     {
       "name": "내 페이지",
       "short_name": "Me",
       "description": "내 레벨/포스트/뱃지",
-      "url": "/#me",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "url": "/#me"
     }
-  ],
-  "screenshots": []
+  ]
 }
