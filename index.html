@@ -278,6 +278,26 @@
       box-shadow: 0 0 12px var(--glow);
     }
 
+    .install-btn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--muted2);
+      padding: 6px 10px; border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .install-btn:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+      box-shadow: 0 0 10px var(--glow2);
+    }
+    .install-btn.installed { display: none; }
+    @media (max-width: 540px) {
+      .install-btn .label { display: none; }
+    }
+
     .user-avatar {
       width: 32px; height: 32px; border-radius: 50%;
       border: 2px solid var(--accent); cursor: pointer;
@@ -1887,6 +1907,11 @@
     } else if (currentMode === 'me') {
       modeLink = `<button class="login-btn mode-link" onclick="enterMode('msg')">MSG →</button>`;
     }
+    // 앱 설치 버튼 — 항상 노출 (이미 설치된 standalone 모드에선 숨김)
+    const installBtnHTML = isAppInstalled()
+      ? ''
+      : `<button class="install-btn" onclick="installApp()" title="앱으로 설치"><span>📲</span><span class="label">앱</span></button>`;
+
     let auth;
     if (currentUser) {
       const avatar = currentUser.user_metadata?.avatar_url;
@@ -1901,7 +1926,7 @@
     } else {
       auth = `<button class="login-btn" onclick="showLoginModal()">로그인</button>`;
     }
-    right.innerHTML = modeLink + auth;
+    right.innerHTML = modeLink + installBtnHTML + auth;
   }
 
   function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('show'); }
