@@ -2,8 +2,27 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>AIFLICK — flick or msg.</title>
+  <meta name="description" content="AI 영상/사진 커뮤니티. 진짜인지 AI인지 맞혀보세요.">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#a855f7">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+
+  <!-- iOS Web App -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AIFLICK">
+  <link rel="apple-touch-icon" href="/icon.svg">
+
+  <!-- Open Graph (공유 시 미리보기) -->
+  <meta property="og:title" content="AIFLICK — Real or AI?">
+  <meta property="og:description" content="AI 영상/사진 커뮤니티. 진짜인지 AI인지 맞혀보세요.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/icon.svg">
+
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Orbitron:wght@700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -34,6 +53,33 @@
       font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── PWA standalone 모드 (앱처럼 동작) ── */
+    @media (display-mode: standalone), (display-mode: fullscreen) {
+      body {
+        overscroll-behavior-y: contain;   /* iOS pull-to-refresh 방지 */
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      input, textarea, .talk-body-md, .modal-body-text {
+        user-select: text;
+        -webkit-user-select: text;
+      }
+      header {
+        padding-top: env(safe-area-inset-top);
+      }
+      header .header-top {
+        height: calc(56px + env(safe-area-inset-top));
+        align-items: center;
+      }
+      .landing-screen, #me-wrap, #msg-wrap {
+        padding-top: env(safe-area-inset-top);
+      }
+      .short-overlay, .video-controls {
+        padding-bottom: max(env(safe-area-inset-bottom), 12px) !important;
+      }
     }
 
     /* 배경 그리드 텍스처 */
@@ -1458,6 +1504,7 @@
 <div class="user-menu" id="user-menu">
   <div class="user-menu-item" id="user-name-display" style="color:var(--muted);font-size:12px;pointer-events:none;"></div>
   <div class="user-menu-item" onclick="enterMode('me')">내 페이지</div>
+  <div class="user-menu-item" id="install-app-item" style="display:none" onclick="installApp()">📲 앱으로 설치</div>
   <div class="user-menu-item danger" onclick="doLogout()">로그아웃</div>
 </div>
 
@@ -3226,6 +3273,45 @@
       if (currentMode) syncHash();
       else showLanding();
     }
+  });
+
+  // ── PWA: Service Worker 등록 + 설치 프롬프트 ──
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('[PWA] SW 등록 완료', reg.scope))
+        .catch((err) => console.warn('[PWA] SW 등록 실패:', err));
+    });
+  }
+
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const item = document.getElementById('install-app-item');
+    if (item) item.style.display = '';
+    console.log('[PWA] 설치 가능 상태');
+  });
+
+  window.installApp = async function () {
+    if (!deferredInstallPrompt) {
+      // iOS: beforeinstallprompt 미지원 — 수동 안내
+      alert('iOS는 Safari 공유 메뉴 → "홈 화면에 추가"로 설치하세요.\nAndroid Chrome은 브라우저 메뉴에서 "앱 설치" 항목을 찾으세요.');
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    console.log('[PWA] 설치 결과:', outcome);
+    deferredInstallPrompt = null;
+    const item = document.getElementById('install-app-item');
+    if (item) item.style.display = 'none';
+  };
+
+  window.addEventListener('appinstalled', () => {
+    console.log('[PWA] 설치 완료');
+    deferredInstallPrompt = null;
+    const item = document.getElementById('install-app-item');
+    if (item) item.style.display = 'none';
   });
 
   // ── INIT ──
